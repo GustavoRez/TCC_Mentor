@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <title>Login</title>
+</head>
+
+<body>
+    <!-- FALTA COLOCAR ESQUECI MINHA SENHA!-->
+    <div>
+        <h1>Faz o login dog</h1>
+    </div>
+    <form id="login" method="post">
+        <label>Email: </label>
+        <input type="text" id="email" placeholder="Insira seu email..." required>
+
+        <label>Senha:</label>
+        <input type="password" id="senha" placeholder="Insira sua senha..." required autocomplete="off">
+        <button class="botao" type="button" onclick="verSenha()">👁</button>
+
+        <p id="message"></p>
+        <input type="submit">
+    </form>
+
+    <script>
+        function verSenha() {
+            const senha = document.getElementById('senha');
+
+            if (senha.type == 'text') document.getElementById('senha').type = 'password';
+            else document.getElementById('senha').type = 'text';
+        }
+
+        document.getElementById('login').addEventListener('submit', function (e) {
+            const user = document.getElementById('email').value;
+            const pass = document.getElementById('senha').value;
+            e.preventDefault();
+
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user, pass })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById('message');
+                    if (data.success) {
+                        messageDiv.style.color = 'rgb(0, 255, 0)';
+                        messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
+                        window.location.href = ('/home');
+
+                    } else {
+                        messageDiv.style.color = 'red';
+                        messageDiv.innerHTML = `<p"><strong>${data.message}</strong></p>`;
+                    }
+                })
+                .catch(error => console.error('Erro ao salvar:', error));
+        })
+    </script>
+</body>
+
+</html>

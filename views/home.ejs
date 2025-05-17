@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <title>Página Incial!</title>
+</head>
+
+<body>
+    <!-- Inicio navbar -->
+    <h2>
+        Olá, <%=nome%>!
+    </h2>
+    <h1>
+        <% if(cargo='ALUN' ){%>
+            Aluno
+            <%} else {%>
+                Professor
+                <%}%>
+    </h1>
+
+    <form action="/quit" method="post">
+        <input type="submit" value="Sair">
+    </form>
+    <!-- Fim navbar -->
+
+    <!-- Inicio projetos -->
+    <div>
+        <%for(var i=0; i < nomeProjetos.length; i++){%>
+            <div>
+                <h2>
+                    <%= nomeProjetos[i] %>
+                </h2>
+                <p>
+                    <%= tipos[i] %>
+                </p>
+                <p>
+                    <%= orientadores[i] %>
+                </p>
+                <p>
+                    <%= alunos[i] %>
+                </p>
+            </div>
+            <%}%>
+    </div>
+    <!-- Fim projetos -->
+
+    <!-- Comeco funcoes rodape -->
+    <%if(! ( cargo === 'ALUN' && nomeProjetos.length > 1 )){%>
+        <a href="adicionarProjeto"><button>+</button></a>
+        <%}%>
+            <button>Ask</button>
+            <!-- Fim funcoes rodape -->
+
+
+</body>
+
+</html>
