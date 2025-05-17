@@ -14,7 +14,7 @@
         Olá, <%=nome%>!
     </h2>
     <h1>
-        <% if(cargo === 'ALUN' ){%>
+        <% if(cargo==='ALUN' ){%>
             Aluno
             <%} else {%>
                 Professor
@@ -47,12 +47,12 @@
     </div>
     <!-- Fim projetos -->
 
-    <!-- Comeco funcoes rodape -->
-    <%if(! ( cargo === 'ALUN' && nomeProjetos.length > 1 )){%>
-        <a href="adicionarProjeto"><button>+</button></a>
-        <%}%>
-            <button>Ask</button>
-            <!-- Fim funcoes rodape -->
+    <!-- Comeco funcoes rodape (TIRAR COMENTARIO DO IF) -->
+    <!--<%if(! ( cargo === 'ALUN' && nomeProjetos.length > 1 )){%>-->
+    <a href="adicionarProjeto"><button>+</button></a>
+    <!--<%}%>-->
+    <button>Ask</button>
+    <!-- Fim funcoes rodape -->
 
 
 </body>

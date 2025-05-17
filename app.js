@@ -79,7 +79,8 @@ app.get('/home', function (req, res) {
 });
 
 app.get('/adicionarProjeto', function (req, res) {
-
+    const cargo = req.session.cargo;
+    res.render('adicionarProjeto', { cargo })
 })
 
 if (require.main === module) {
