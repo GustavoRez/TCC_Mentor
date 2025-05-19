@@ -1,25 +1,137 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
     <title>Adicionar projeto.</title>
 </head>
+
 <body>
+    <h1>Adicione seu TCC</h1>
     <form id="addProject" method="post">
         <label for="nome">Nome do projeto:</label>
-        <input type="text" id="nome" placeholder="Insira o nome..." required>
+        <input type="text" id="nome" placeholder="Insira o nome..." maxlength="60" required>
 
         <label for="desc">Descrição do projeto:</label>
         <input type="text" id="desc" placeholder="Insira uma breve descrição...">
-        
+
         <label for="tipo">Tipo do projeto:</label>
         <select id="tipo">
-            <option value="">Relatório Técnico</option>
-            <option value="">Monografia</option>
-            <option value="">Artigo Científico</option>
+            <option value="Relatório Técnico">Relatório Técnico</option>
+            <option value="Monografia">Monografia</option>
+            <option value="Artigo Científico">Artigo Científico</option>
         </select>
+
+        <%if(cargo=='ALUN' ) {%>
+            <label for="orient">Orientador:</label>
+            <input type="text" id="orient" placeholder="Insira o nome completo do orientador..." maxlength="60"
+                required>
+
+            <button type="button" id="toggleCoorientador" onclick="adicionarCoorientador()">+</button>
+            <div id="coorient" hidden>
+                <label for="coor">Coorientador:</label>
+                <input type="text" id="coor" placeholder="Insira o nome completo do coorientador..." maxlength="60">
+            </div>
+            <%} else { %>
+                <div id="alunos-container">
+                    <label>Alunos:</label>
+                    <input type="text" name="alunos[]" placeholder="Insira o nome completo do aluno..."
+                        oninput="adicionarAlunos(this)" maxlength="60">
+                </div>
+                <%}%>
+                    <p id="message"></p>
+                    <input type="submit">
     </form>
+
+    <script>
+        function adicionarCoorientador() {
+            const coorientador = document.getElementById('coorient');
+            const botao = document.getElementById('toggleCoorientador');
+
+            if (coorientador.hasAttribute('hidden')) {
+                coorientador.removeAttribute('hidden');
+                botao.textContent = '-';
+            } else {
+                coorientador.setAttribute('hidden', true);
+                botao.textContent = '+';
+            }
+        }
+
+        function adicionarAlunos(input) {
+            const container = document.getElementById('alunos-container');
+            const tipo = document.getElementById('tipo').value;
+
+            let limite = 0;
+            if (tipo === 'Relatório Técnico' || tipo === 'Monografia') limite = 3;
+            else if (tipo === 'Artigo Científico') limite = 2;
+
+            const inputs = container.querySelectorAll('input[name="alunos[]"]');
+            const lastInput = inputs[inputs.length - 1];
+            const secondLastInput = inputs[inputs.length - 2];
+
+            if (input === lastInput && input.value.trim() !== '' && inputs.length < limite) {
+                const novoInput = document.createElement('input');
+                novoInput.type = 'text';
+                novoInput.name = 'alunos[]';
+                novoInput.placeholder = 'Insira o nome completo do aluno...';
+                novoInput.maxLength = 60;
+                novoInput.oninput = function () { adicionarAlunos(this); };
+                container.appendChild(novoInput);
+            }
+
+            if (
+                inputs.length > 1 &&
+                input === secondLastInput.value.trim() === '' ||
+                inputs.length > limite
+            ) {
+                lastInput.remove();
+            }
+        }
+
+        document.getElementById('addProject').addEventListener('submit', function (e) {
+            const nome = document.getElementById('nome').value;
+            const desc = document.getElementById('desc').value;
+            const tipo = document.getElementById('tipo').value;
+            let orientador = null;
+            let coorientador = null;
+            let alunos = [];
+
+            if ('<%=cargo%>' === 'ALUN') {
+                orientador = document.getElementById('orient').value;
+                coorientador = document.getElementById('coor').value;
+            } else {
+                const alunoInputs = document.querySelectorAll('input[name="alunos[]"]');
+                alunos = Array.from(alunoInputs)
+                    .map(input => input.value.trim())
+                    .filter(valor => valor !== '');
+
+            }
+            e.preventDefault();
+
+            fetch('/adicionarProjeto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nome, desc, tipo, orientador, coorientador, alunos })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById('message');
+                    if (data.success) {
+                        messageDiv.style.color = 'rgb(0, 255, 0)';
+                        messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
+
+                    } else {
+                        messageDiv.style.color = 'red';
+                        messageDiv.innerHTML = `<p"><strong>${data.message}</strong></p>`;
+                    }
+                })
+                .catch(error => console.error('Erro ao salvar:', error));
+        })
+    </script>
 </body>
+
 </html>
