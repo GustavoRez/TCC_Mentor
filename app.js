@@ -47,24 +47,24 @@ app.get('/cadastro', function (req, res) {
     res.sendFile(path.join(__dirname + '/views/cadastro.html'));
 });
 
-app.post('/cadastro', function(req, res){
+app.post('/cadastro', function (req, res) {
     const { email, nome, cargo, senha } = req.body;
     const sql = "SELECT * FROM usuario WHERE email = ?";
 
-    connection.query(sql, email, function(err, results){
-        if(err) throw err;
+    connection.query(sql, email, function (err, results) {
+        if (err) throw err;
         console.log(results.length)
-        if(results.length < 1){
+        if (results.length < 1) {
             const sql2 = "INSERT INTO usuario (nm_usuario, cargo, email, senha) VALUES (?, ?, ?, MD5(?))";
-            connection.query(sql2, [nome, cargo, email, senha], function(err2, results2){
-                if(err) {
+            connection.query(sql2, [nome, cargo, email, senha], function (err2, results2) {
+                if (err) {
                     console.log(err2);
                     return res.json({ success: false, message: 'Erro ao criar usuario.' });
                 } else {
                     console.log(results2);
-                    return res.json({ success: true, message: 'Perfil criado! Faça o login para continuar.'});
+                    return res.json({ success: true, message: 'Perfil criado! Faça o login para continuar.' });
                 }
-                
+
             })
         } else
             return res.json({ success: false, message: 'Esse email já possui cadastro!' });
@@ -91,11 +91,11 @@ app.get('/home', function (req, res) {
     let sql;
 
     if (req.session.loggedin) {
-        if(req.session.cargo === 'ALUN'){
+        if (req.session.cargo === 'ALUN') {
             sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, a.nm_usuario aluno FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE a.id_usuario = ?";
         } else {
             sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, a.nm_usuario aluno FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE o.id_usuario = ?";
-        } 
+        }
         connection.query(sql, [id], function (err, results) {
             if (err) throw err;
             for (var i = 0; i < results.length; i++) {
@@ -111,6 +111,33 @@ app.get('/home', function (req, res) {
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
+app.get('/projeto-:projectURL', function (req, res) {
+    if (req.session.loggedin) {
+        const URL = req.params.projectURL;
+        let projeto;
+        let desc;
+        let tipo;
+        let orientador;
+        const aluno = [];
+        let sql = "SELECT nm_projeto, dc_projeto, tp_projeto, o.nm_usuario orientador, a.nm_usuario aluno FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (a.id_usuario = id_aluno) WHERE url = ?";
+
+        connection.query(sql, URL, function(err, results){
+            if(err) throw err;
+            for(var i = 0; i < results.length; i++){
+                projeto = results[0].nm_projeto;
+                desc = results[0].dc_projeto;
+                tipo = results[0].tp_projeto;
+                orientador = results[0].orientador;
+                aluno.push(results[i].aluno);
+            }
+            res.render('projeto', {projeto, desc, tipo, orientador, aluno})
+        })
+        
+
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+})
+
 app.get('/adicionarProjeto', function (req, res) {
     if (req.session.loggedin) {
         const cargo = req.session.cargo;
@@ -123,16 +150,16 @@ app.post('/adicionarProjeto', function (req, res) {
     const { nome, desc, tipo, alunos, orientador } = req.body;
     let coorientador;
 
-    if(req.session.cargo === 'ALUN')
+    if (req.session.cargo === 'ALUN')
         orientador, coorientador = req.body
     else
         orientador = req.session.idUser
 
     const sql = "INSERT INTO projeto (nm_projeto, dc_projeto,  tp_projeto, id_orientador) SELECT ?, ?, ?, id_usuario FROM usuario WHERE nm_usuario = ?";
-    
 
-    connection.query(sql, [nome, desc, tipo, orientador], function(err, results){
-        if(err){
+
+    connection.query(sql, [nome, desc, tipo, orientador], function (err, results) {
+        if (err) {
             console.log(err);
             return res.json({ success: false, message: 'Erro ao criar projeto.' });
         } else {
@@ -140,8 +167,8 @@ app.post('/adicionarProjeto', function (req, res) {
             const idProjeto = results.insertId;
             const sqlAluno = "INSERT INTO projeto_aluno (id_projeto, id_aluno) SELECT '?', id_usuario FROM usuario WHERE nm_usuario = ?";
 
-            connection.query(sqlAluno, [idProjeto, req.session.nome], function(err2, results2){
-                if(err2){
+            connection.query(sqlAluno, [idProjeto, req.session.nome], function (err2, results2) {
+                if (err2) {
                     console.log("Aluno err: ", err2);
                 } else {
                     console.log("Aluno results: ", results2);
