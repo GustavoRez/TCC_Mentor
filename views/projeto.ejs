@@ -47,7 +47,7 @@
 
     <form id="formMensagem" enctype="multipart/form-data">
         <input type="text" name="mensagem" id="msg" placeholder="Digite sua mensagem...">
-        <input type="file" name="arquivo_pdf" accept=".pdf">
+        <input type="file" id="pdf" name="arquivo_pdf" accept=".pdf">
         <button type="submit">Enviar</button>
     </form>
 
@@ -56,6 +56,15 @@
 
         document.getElementById('formMensagem').addEventListener('submit', function (e) {
             e.preventDefault();
+
+            const inputTexto = document.getElementById('msg');
+            const arquivo = document.querySelector('input[type="file"]').files[0];
+            const texto = inputTexto.value.trim();
+
+            if (!texto && !arquivo) {
+                alert("Digite uma mensagem ou selecione um arquivo PDF.");
+                return;
+            }
 
             const formData = new FormData(this);
             formData.append('idProjeto', idProjeto);
@@ -66,6 +75,7 @@
                 body: formData
             }).then(() => {
                 document.getElementById('msg').value = '';
+                document.getElementById('pdf').value = '';
                 buscarMensagens();
             }).catch(err => console.error('Erro ao enviar:', err));
         });
@@ -75,11 +85,13 @@
                 .then(res => res.json())
                 .then(data => {
                     const chat = document.getElementById('chat');
-                    chat.innerHTML = '';
+                    chat.innerHTML = ''; // limpa antes de renderizar
+
                     data.forEach(msg => {
                         chat.innerHTML += `
-                    <div>
-                        <h2>${msg.mensagem}</h2>
+                    <div class="mensagem">
+                        ${msg.mensagem ? `<h2>${msg.mensagem}</h2>` : ''}
+                        ${msg.arquivo_pdf ? `<a href="/uploads/${msg.arquivo_pdf}" target="_blank">📎 Ver PDF</a>` : ''}
                         <h4>${msg.data_envio}</h4>
                         <h4>${msg.remetente}</h4>
                     </div>
@@ -87,6 +99,7 @@
                     });
                 });
         }
+
 
         setInterval(buscarMensagens, 2000);
         buscarMensagens();

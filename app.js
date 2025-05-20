@@ -2,13 +2,27 @@ var express = require("express");
 var app = express();
 var connection = require('./database');
 const path = require('path');
+const multer = require('multer');
 const session = require('express-session');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'images')));
+app.use('/uploads', express.static('public/uploads'));
 
 app.set('view engine', 'ejs')
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '-' + file.originalname;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({ storage: storage });
 
 app.use(session({
     secret: 'secret',
@@ -158,7 +172,7 @@ app.get('/mensagens', (req, res) => {
   }
 
   const sql = `
-    SELECT mensagem, remetente,
+    SELECT mensagem, remetente, arquivo_pdf,
            DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio
     FROM mensagem_chat
     WHERE id_projeto = ?
@@ -175,15 +189,16 @@ app.get('/mensagens', (req, res) => {
   });
 });
 
-app.post('/mensagens', (req, res) => {
+app.post('/mensagens', upload.single('arquivo_pdf'), (req, res) => {
     const { idProjeto, remetente, mensagem } = req.body;
+    const arquivo_pdf = req.file ? req.file.filename : null;
 
     const sql = `
-    INSERT INTO mensagem_chat (id_projeto, remetente, mensagem)
-    VALUES (?, ?, ?)
+    INSERT INTO mensagem_chat (id_projeto, remetente, mensagem, arquivo_pdf)
+    VALUES (?, ?, ?, ?)
   `;
 
-    connection.query(sql, [idProjeto, remetente, mensagem], (err, results) => {
+    connection.query(sql, [idProjeto, remetente, mensagem || null, arquivo_pdf], (err, results) => {
         if (err) return res.status(500).json({ error: 'Erro ao enviar mensagem' });
         res.json({ results });
     });
