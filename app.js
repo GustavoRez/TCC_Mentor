@@ -94,7 +94,7 @@ app.get('/home', function (req, res) {
         if (req.session.cargo === 'ALUN') {
             sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, a.nm_usuario aluno FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE a.id_usuario = ?";
         } else {
-            sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, a.nm_usuario aluno FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE o.id_usuario = ?";
+            sql = "SELECT p.nm_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno WHERE o.id_usuario = ? GROUP BY p.id_projeto";
         }
         connection.query(sql, [id], function (err, results) {
             if (err) throw err;
@@ -102,7 +102,7 @@ app.get('/home', function (req, res) {
                 nomeProjetos[i] = results[i].nm_projeto;
                 tipos[i] = results[i].tp_projeto;
                 orientadores[i] = results[i].orientador;
-                alunos[i] = results[i].aluno;
+                alunos[i] = results[i].alunos;
             }
             res.render('home', { nome, cargo, nomeProjetos, tipos, orientadores, alunos })
         })
@@ -114,29 +114,80 @@ app.get('/home', function (req, res) {
 app.get('/projeto-:projectURL', function (req, res) {
     if (req.session.loggedin) {
         const URL = req.params.projectURL;
+        const cargo = req.session.cargo;
+        let idProjeto;
         let projeto;
         let desc;
         let tipo;
         let orientador;
-        const aluno = [];
-        let sql = "SELECT nm_projeto, dc_projeto, tp_projeto, o.nm_usuario orientador, a.nm_usuario aluno FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (a.id_usuario = id_aluno) WHERE url = ?";
+        let aluno = [];
+        const mensagem = [];
+        const dtMensagem = [];
+        const remetente = [];
+        let sql = "SELECT p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(DISTINCT a.nm_usuario SEPARATOR ', ') AS alunos, m.remetente, m.mensagem, DATE_FORMAT(m.data_envio, '%d/%m/%Y - %H:%i') AS data_envio FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno LEFT JOIN mensagem_chat m ON m.id_projeto = p.id_projeto WHERE url = ? GROUP BY p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario, m.remetente, m.mensagem, m.data_envio";
 
-        connection.query(sql, URL, function(err, results){
-            if(err) throw err;
-            for(var i = 0; i < results.length; i++){
-                projeto = results[0].nm_projeto;
-                desc = results[0].dc_projeto;
-                tipo = results[0].tp_projeto;
-                orientador = results[0].orientador;
-                aluno.push(results[i].aluno);
-            }
-            res.render('projeto', {projeto, desc, tipo, orientador, aluno})
+        connection.query(sql, URL, function (err, results) {
+            if (err) throw err;
+            idProjeto = results[0].id_projeto;
+            projeto = results[0].nm_projeto;
+            desc = results[0].dc_projeto;
+            tipo = results[0].tp_projeto;
+            orientador = results[0].orientador;
+            aluno = results[0].alunos
+
+            const mensagens = results
+                .filter(r => r.mensagem !== null)
+                .map(r => ({
+                    mensagem: r.mensagem,
+                    data_envio: r.data_envio,
+                    remetente: r.remetente
+                }));
+            res.render('projeto', { cargo, idProjeto, projeto, desc, tipo, orientador, aluno, mensagens })
         })
-        
+
 
     } else
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 })
+
+app.get('/mensagens', (req, res) => {
+  const idProjeto = req.query.idProjeto;
+
+  if (!idProjeto) {
+    return res.status(400).json({ error: 'ID do projeto não informado' });
+  }
+
+  const sql = `
+    SELECT mensagem, remetente,
+           DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio
+    FROM mensagem_chat
+    WHERE id_projeto = ?
+    ORDER BY data_envio ASC
+  `;
+
+  connection.query(sql, [idProjeto], (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar mensagens:", err);
+      return res.status(500).json({ error: 'Erro no servidor' });
+    }
+
+    res.json(results);
+  });
+});
+
+app.post('/mensagens', (req, res) => {
+    const { idProjeto, remetente, mensagem } = req.body;
+
+    const sql = `
+    INSERT INTO mensagem_chat (id_projeto, remetente, mensagem)
+    VALUES (?, ?, ?)
+  `;
+
+    connection.query(sql, [idProjeto, remetente, mensagem], (err, results) => {
+        if (err) return res.status(500).json({ error: 'Erro ao enviar mensagem' });
+        res.json({ results });
+    });
+});
 
 app.get('/adicionarProjeto', function (req, res) {
     if (req.session.loggedin) {

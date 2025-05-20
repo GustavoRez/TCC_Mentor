@@ -29,24 +29,24 @@
     <!-- Inicio projetos -->
     <div>
         <%for(var i=0; i < nomeProjetos.length; i++){%>
-            <% let projectURL = [nomeProjetos[i].toLowerCase().replace(/\s+/g, '-')]%>
-            <a href="/projeto-<%=projectURL%>">
-                <div>
-                    <h2>
-                        <%= nomeProjetos[i] %>
-                    </h2>
-                    <p>
-                        <%= tipos[i] %>
-                    </p>
-                    <p>
-                        <%= orientadores[i] %>
-                    </p>
-                    <p>
-                        <%= alunos[i] %>
-                    </p>
-                </div>
-            </a>
-            <%}%>
+            <% let projectURL=[nomeProjetos[i].toLowerCase().replace(/\s+/g, '-' )]%>
+                <a href="/projeto-<%=projectURL%>">
+                    <div>
+                        <h2>
+                            <%= nomeProjetos[i] %>
+                        </h2>
+                        <p>
+                            <%= tipos[i] %>
+                        </p>
+                        <p>
+                            <%= orientadores[i] %>
+                        </p>
+                        <p>
+                            <%= alunos[i] %>
+                        </p>
+                    </div>
+                </a>
+                <%}%>
     </div>
     <!-- Fim projetos -->
 

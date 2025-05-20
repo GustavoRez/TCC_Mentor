@@ -1,16 +1,96 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
-    <title><%=projeto%></title>
+    <title>
+        <%=projeto%>
+    </title>
 </head>
+
 <body>
-    <h1><%=projeto%></h1>
-    <p><%=desc%></p>
-    <p><%=tipo%></p>
-    <p><%=orientador%></p>
-    <p><%=aluno%></p>
+    <a href="/home"><button>
+            <p>Voltar</p>
+        </button></a>
+    <h1>
+        <%=projeto%>
+    </h1>
+    <p>
+        <%=desc%>
+    </p>
+    <p>
+        <%=tipo%>
+    </p>
+    <p>
+        <%=orientador%>
+    </p>
+    <p>
+        <%=aluno%>
+    </p>
+    <div id="chat">
+        <% mensagens.forEach(msg=> { %>
+            <div class="mensagem">
+                <h2>
+                    <%= msg.mensagem %>
+                </h2>
+                <h4>
+                    <%= msg.data_envio %>
+                </h4>
+                <h4>
+                    <%= msg.remetente %>
+                </h4>
+            </div>
+            <% }) %>
+    </div>
+
+    <form id="formMensagem" enctype="multipart/form-data">
+        <input type="text" name="mensagem" id="msg" placeholder="Digite sua mensagem...">
+        <input type="file" name="arquivo_pdf" accept=".pdf">
+        <button type="submit">Enviar</button>
+    </form>
+
+    <script>
+        const idProjeto = '<%=idProjeto %>';
+
+        document.getElementById('formMensagem').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            formData.append('idProjeto', idProjeto);
+            formData.append('remetente', '<%=cargo%>');
+
+            fetch('/mensagens', {
+                method: 'POST',
+                body: formData
+            }).then(() => {
+                document.getElementById('msg').value = '';
+                buscarMensagens();
+            }).catch(err => console.error('Erro ao enviar:', err));
+        });
+
+        function buscarMensagens() {
+            fetch(`/mensagens?idProjeto=${idProjeto}`)
+                .then(res => res.json())
+                .then(data => {
+                    const chat = document.getElementById('chat');
+                    chat.innerHTML = '';
+                    data.forEach(msg => {
+                        chat.innerHTML += `
+                    <div>
+                        <h2>${msg.mensagem}</h2>
+                        <h4>${msg.data_envio}</h4>
+                        <h4>${msg.remetente}</h4>
+                    </div>
+                `;
+                    });
+                });
+        }
+
+        setInterval(buscarMensagens, 2000);
+        buscarMensagens();
+    </script>
 </body>
+
 </html>
