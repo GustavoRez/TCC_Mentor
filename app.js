@@ -4,6 +4,7 @@ var connection = require('./database');
 const path = require('path');
 const multer = require('multer');
 const session = require('express-session');
+const axios = require("axios");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -13,13 +14,13 @@ app.use('/uploads', express.static('public/uploads'));
 app.set('view engine', 'ejs')
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public/uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + '-' + file.originalname;
-    cb(null, uniqueName);
-  }
+    destination: (req, file, cb) => {
+        cb(null, 'public/uploads/');
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = Date.now() + '-' + file.originalname;
+        cb(null, uniqueName);
+    }
 });
 
 const upload = multer({ storage: storage });
@@ -165,13 +166,13 @@ app.get('/projeto-:projectURL', function (req, res) {
 })
 
 app.get('/mensagens', (req, res) => {
-  const idProjeto = req.query.idProjeto;
+    const idProjeto = req.query.idProjeto;
 
-  if (!idProjeto) {
-    return res.status(400).json({ error: 'ID do projeto não informado' });
-  }
+    if (!idProjeto) {
+        return res.status(400).json({ error: 'ID do projeto não informado' });
+    }
 
-  const sql = `
+    const sql = `
     SELECT mensagem, remetente, arquivo_pdf,
            DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio
     FROM mensagem_chat
@@ -179,17 +180,17 @@ app.get('/mensagens', (req, res) => {
     ORDER BY data_envio ASC
   `;
 
-  connection.query(sql, [idProjeto], (err, results) => {
-    if (err) {
-      console.error("Erro ao buscar mensagens:", err);
-      return res.status(500).json({ error: 'Erro no servidor' });
-    }
+    connection.query(sql, [idProjeto], (err, results) => {
+        if (err) {
+            console.error("Erro ao buscar mensagens:", err);
+            return res.status(500).json({ error: 'Erro no servidor' });
+        }
 
-    res.json(results);
-  });
+        res.json(results);
+    });
 });
 
-app.post('/mensagens', upload.single('arquivo_pdf'), (req, res) => {
+app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
     const { idProjeto, remetente, mensagem } = req.body;
     const arquivo_pdf = req.file ? req.file.filename : null;
 
@@ -198,10 +199,35 @@ app.post('/mensagens', upload.single('arquivo_pdf'), (req, res) => {
     VALUES (?, ?, ?, ?)
   `;
 
-    connection.query(sql, [idProjeto, remetente, mensagem || null, arquivo_pdf], (err, results) => {
-        if (err) return res.status(500).json({ error: 'Erro ao enviar mensagem' });
-        res.json({ results });
-    });
+    try {
+        await new Promise((resolve, reject) => {
+            connection.query(sql, [idProjeto, remetente, mensagem || null, arquivo_pdf], (err, results) => {
+                if (err) return reject(err);
+                resolve(results);
+            });
+        });
+
+        if (remetente === 'ORIE' && mensagem) {
+            const respostaIA = await axios.post("http://localhost:8000/analisar", {
+                conteudo: mensagem
+            });
+
+            const mensagemIA = respostaIA.data.resposta;
+
+            await new Promise((resolve, reject) => {
+                connection.query(sql, [idProjeto, 'IA', mensagemIA, null], (err, results) => {
+                    if (err) return reject(err);
+                    resolve(results);
+                });
+            });
+        }
+
+        res.json({ sucesso: true });
+
+    } catch (err) {
+        console.error("Erro no envio da mensagem:", err.message);
+        res.status(500).json({ error: 'Erro ao enviar ou processar a mensagem' });
+    }
 });
 
 app.get('/adicionarProjeto', function (req, res) {
