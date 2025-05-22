@@ -67,13 +67,13 @@ Copie a chave gerada e a guarde em um bloco de notas chamado "chave.txt" nos seu
 Com npm:
 
 ```bash
-npm install axios ejs express express-session form-data multer mysql
+npm install node axios ejs express express-session form-data multer mysql
 ```
 
 Ou com yarn:
 
 ```bash
-yarn add axios ejs express express-session form-data multer mysql
+yarn add node axios ejs express express-session form-data multer mysql
 ```
 
 E também com pip
