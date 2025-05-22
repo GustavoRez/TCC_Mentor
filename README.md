@@ -76,6 +76,11 @@ Ou com yarn:
 yarn add axios ejs express express-session form-data multer mysql
 ```
 
+E também com pip
+```bash
+pip install fastapi genai PyMuPDF pydantic uvicorn
+```
+
 ### 4. Rode o projeto
 
 No terminal, rode o backend Node.js:
