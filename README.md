@@ -52,7 +52,17 @@ TCC_MENTOR/
 git clone https://github.com/GustavoRez/TCC_Mentor
 ```
 
-### 2. Instale as dependências
+### 2. Pegue uma API Key do Gemini (Google AI)
+
+Acesse: https://aistudio.google.com/app/apikey
+
+Faça login com sua conta Google.
+
+Clique em "+ Criar chave de API".
+
+Copie a chave gerada e a guarde em um bloco de notas chamado "chave.txt" nos seus Documentos.
+
+### 3. Instale as dependências
 
 Com npm:
 
@@ -66,7 +76,7 @@ Ou com yarn:
 yarn add axios ejs express express-session form-data multer mysql
 ```
 
-### 3. Rode o projeto
+### 4. Rode o projeto
 
 No terminal, rode o backend Node.js:
 
