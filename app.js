@@ -5,6 +5,8 @@ const path = require('path');
 const multer = require('multer');
 const session = require('express-session');
 const axios = require("axios");
+const FormData = require("form-data");
+const fs = require("fs");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -198,7 +200,6 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
     INSERT INTO mensagem_chat (id_projeto, remetente, mensagem, arquivo_pdf)
     VALUES (?, ?, ?, ?)
   `;
-
     try {
         await new Promise((resolve, reject) => {
             connection.query(sql, [idProjeto, remetente, mensagem || null, arquivo_pdf], (err, results) => {
@@ -209,9 +210,8 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
 
         if (remetente === 'ORIE' && mensagem) {
             const respostaIA = await axios.post("http://localhost:8000/analisar", {
-                conteudo: mensagem
+                conteudo: mensagem,
             });
-
             const mensagemIA = respostaIA.data.resposta;
 
             await new Promise((resolve, reject) => {
@@ -220,6 +220,31 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
                     resolve(results);
                 });
             });
+        }
+
+        if (remetente === 'ORIE' && arquivo_pdf) {
+            const pdfPath = path.join(__dirname, 'public/uploads', arquivo_pdf);
+
+            const formData = new FormData();
+            formData.append("file", fs.createReadStream(pdfPath));
+
+            try {
+                const respostaIA = await axios.post("http://localhost:8000/analisarPDF", formData, {
+                    headers: formData.getHeaders(),
+                });
+
+                const mensagemIA = respostaIA.data.resposta;
+
+                await new Promise((resolve, reject) => {
+                    connection.query(sql, [idProjeto, 'IA', mensagemIA, null], (err, results) => {
+                        if (err) return reject(err);
+                        resolve(results);
+                    });
+                });
+
+            } catch (err) {
+                console.error("Erro ao analisar PDF:", err.response?.data || err.message);
+            }
         }
 
         res.json({ sucesso: true });
