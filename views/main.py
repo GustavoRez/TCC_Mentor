@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import fitz
 import os
 #Imaginando que o diretório 'TCC_MENTOR' está em na Área de Trabalho
-arquivo = open("../../../Documents/chave.txt", "r")
+arquivo = open("../../Documents/chave.txt", "r")
 
 os.environ['GOOGLE_API_KEY'] = arquivo.read()
 
