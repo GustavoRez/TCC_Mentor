@@ -2,17 +2,17 @@
 
 # 📦 TCC MENTOR
 
-TCC MENTOR é um auxiliador na criação de TCC's. Ele conta com uma Inteligência Artificial que auxilia o aluno a compreender os feedbacks do orientador, além de um chatbox com uma IA que também o auxiliará.
+**TCC MENTOR** é um auxiliador na criação de TCCs. Ele conta com uma Inteligência Artificial que ajuda o aluno a compreender os feedbacks do orientador, além de um chatbox com IA pra tirar dúvidas.
 
 ---
 
 ## 🚀 Tecnologias Usadas
 
 * **Linguagens:** Node.js / Python / HTML
-* **Frameworks:** Express / EJS
-* **Bibliotecas:** Axios / Multer / Form-data / Express-session / MySQL
+* **Frameworks:** Express / EJS / FastAPI
+* **Bibliotecas:** Axios / Multer / Form-data / Express-session / MySQL / PyMuPDF / Google GenAI
 * **Banco de Dados:** MySQL
-* **Outras ferramentas:** XAMPP
+* **Outras ferramentas:** XAMPP / MySQL Workbench
 
 ---
 
@@ -44,58 +44,82 @@ TCC_MENTOR/
 
 ---
 
-## 📄 Como Rodar o Projeto
+## 💻 Pré-requisitos e Instalações
 
-### 1. Clone o repositório
+1. Instale o **VSCode**:
+   👉 [Download](https://code.visualstudio.com/Download)
+2. Instale o **Python 3.11** pela Microsoft Store.
+3. Instale o **Node.js 22.16.0**:
+   👉 [Download](https://nodejs.org/pt/download)
+4. No VSCode, instale a extensão de Python.
+5. Baixe o **XAMPP** (versão 8.2.12):
+   👉 [Download](https://www.apachefriends.org/download.html)
+6. Baixe o **MySQL Workbench** (instalação completa):
+   👉 [Download](https://dev.mysql.com/downloads/file/?id=541637)
 
-```bash
-git clone https://github.com/GustavoRez/TCC_Mentor
-```
+---
 
-### 2. Pegue uma API Key do Gemini (Google AI)
+## 🔑 Configurar API Key do Gemini
 
-Acesse: https://aistudio.google.com/app/apikey
+1. Acesse [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Faça login com sua conta Google.
+3. Clique em “Criar chave de API”.
+4. Copie a chave gerada e salve em um arquivo chamado `chave.txt` dentro da pasta **Documentos** do seu usuário.
 
-Faça login com sua conta Google.
+---
 
-Clique em "+ Criar chave de API".
+## 📥 Instalando as Dependências
 
-Copie a chave gerada e a guarde em um bloco de notas chamado "chave.txt" nos seus Documentos.
-
-### 3. Instale as dependências
-
-Com npm:
+### Com `npm`
 
 ```bash
 npm install node axios ejs express express-session form-data multer mysql
 ```
 
-Ou com yarn:
+### Com `yarn`
 
 ```bash
 yarn add node axios ejs express express-session form-data multer mysql
 ```
 
-E também com pip
+### Com `pip`
+
 ```bash
 pip install fastapi google-genai PyMuPDF pydantic uvicorn python-multipart
 ```
 
-### 4. Rode o projeto
+> ⚠️ Se estiver com problemas de permissão ao instalar pacotes, rode o PowerShell como administrador e execute:
 
-No terminal, rode o backend Node.js:
+```bash
+Set-ExecutionPolicy RemoteSigned
+# Depois pressione 'S' pra confirmar
+```
+
+---
+
+## 🛠 Configurações do MySQL
+
+1. Deixe o usuário root **sem senha**.
+2. No **MySQL Workbench**, vá em `Server > Data Import`.
+3. Importe os bancos de dados do projeto.
+
+---
+
+## ▶️ Rodando o Projeto
+
+### 1. Rode o backend Node.js:
 
 ```bash
 node app.js
 ```
 
-Em outro terminal, rode o backend Python com Uvicorn:
+### 2. Em outro terminal, rode o backend Python:
 
 ```bash
 python -m uvicorn main:app --reload
 ```
 
-> **Obs:** Se o seu `main.py` estiver dentro da pasta `views`, rode:
+> 🔁 Se o arquivo `main.py` estiver dentro de `views/`, use:
 
 ```bash
 python -m uvicorn views.main:app --reload
@@ -110,5 +134,14 @@ Abra seu navegador e acesse:
 ```
 http://localhost:3000
 ```
+
+Se tudo tiver certinho, o sistema vai tá no ar ✨
+
+---
+
+## ⚠️ Dicas Extras
+
+* Se você instalou o **Node.js** com o VSCode aberto, **reinicie o VSCode**.
+* Rode primeiro o `import genai`, depois os demais.
 
 ---
