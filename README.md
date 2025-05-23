@@ -74,7 +74,7 @@ TCC_MENTOR/
 ### Com `npm`
 
 ```bash
-npm install node axios ejs express express-session form-data multer mysql
+npm install node axios ejs express express-session form-data multer mysql nodemailer
 ```
 
 ### Com `yarn`
