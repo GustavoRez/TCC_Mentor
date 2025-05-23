@@ -1,6 +1,6 @@
 ---
 
-# 📦 TCC MENTOR
+## 📦 TCC MENTOR
 
 **TCC MENTOR** é um auxiliador na criação de TCCs. Ele conta com uma Inteligência Artificial que ajuda o aluno a compreender os feedbacks do orientador, além de um chatbox com IA pra tirar dúvidas.
 
