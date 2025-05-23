@@ -7,6 +7,8 @@ const session = require('express-session');
 const axios = require("axios");
 const FormData = require("form-data");
 const fs = require("fs");
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -60,6 +62,91 @@ app.post('/login', function (req, res) {
     });
 });
 
+app.get('/esqueciSenha', function (req, res) {
+    res.sendFile(path.join(__dirname + '/views/esqueciSenha.html'));
+})
+
+app.post('/esqueciSenha', function (req, res) {
+    const email = req.body.email;
+    const sql = "SELECT * FROM usuario WHERE email = ?";
+
+    connection.query(sql, email, function (err, results) {
+        if (err) throw err;
+        if (results.length < 1) {
+            return res.json({ success: false, message: 'Esse email não possui cadastro!' });
+        }
+        const token = crypto.randomBytes(20).toString('hex');
+        const tokenSql = `UPDATE usuario SET token_recuperacao = ?, token_expira = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE email = ?`;
+        connection.query(tokenSql, [token, email], (err, results) => {
+            if (err) throw err;
+
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: 'admtccmentor@gmail.com',
+                    pass: 'rsaq gcbr domf jbkv'
+                }
+            });
+
+            const mailOptions = {
+                from: 'TCC Mentor <admtccmentor@gmail.com>',
+                to: email,
+                subject: 'Recuperação de Senha - TCC Mentor',
+                html: `
+                    <p>Você solicitou a recuperação de senha.</p>
+                    <p>Clique no link abaixo para redefinir sua senha:</p>
+                    <a href="http://localhost:3000/redefinirSenha?token=${token}&email=${email}">Redefinir Senha</a>
+                    <p>Este link é válido por 1 hora.</p>
+                `
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    console.error(error);
+                    return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
+                } else {
+                    return res.json({ success: true, message: 'E-mail de recuperação enviado com sucesso!' });
+                }
+            });
+        });
+    })
+})
+
+app.get('/redefinirSenha', function (req, res) {
+    const { email, token } = req.query;
+    const sql = "SELECT * FROM usuario WHERE email = ? AND token_recuperacao = ?";
+    connection.query(sql, [email, token], (err, results) => {
+        if (err) throw err;
+        if (results.length === 0) {
+            return res.send('Token inválido ou expirado. Solicite outro!');
+        }
+
+        const usuario = results[0];
+        const agora = new Date();
+        if (agora > usuario.token_expira) {
+            return res.send('Token expirado. Solicite outro!');
+        }
+
+        res.render('redefinirSenha', { email, token });
+    });
+})
+
+app.post('/redefinirSenha', function (req, res) {
+    const { senha, email } = req.body;
+    const sql = "UPDATE usuario SET senha = MD5(?), token_recuperacao = NULL, token_expira = NULL WHERE email = ?";
+
+    connection.query(sql, [senha, email], function (err, results) {
+        if (err) {
+            console.log(err);
+            return res.json({ success: false, message: 'Erro ao alterar senha.' });
+        } else {
+            console.log(results);
+            return res.json({ success: true, message: 'Senha alterada! Faça o login para continuar.' });
+        }
+    })
+
+})
+
 app.get('/cadastro', function (req, res) {
     res.sendFile(path.join(__dirname + '/views/cadastro.html'));
 });
@@ -70,7 +157,6 @@ app.post('/cadastro', function (req, res) {
 
     connection.query(sql, email, function (err, results) {
         if (err) throw err;
-        console.log(results.length)
         if (results.length < 1) {
             const sql2 = "INSERT INTO usuario (nm_usuario, cargo, email, senha) VALUES (?, ?, ?, MD5(?))";
             connection.query(sql2, [nome, cargo, email, senha], function (err2, results2) {
@@ -266,19 +352,23 @@ app.get('/adicionarProjeto', function (req, res) {
 app.post('/adicionarProjeto', function (req, res) {
     const { nome, desc, tipo, alunos, orientador } = req.body;
     let coorientador;
+    const url = nome.toLowerCase().replace(/\s+/g, '-');
 
     if (req.session.cargo === 'ALUN')
         orientador, coorientador = req.body
     else
         orientador = req.session.idUser
 
-    const sql = "INSERT INTO projeto (nm_projeto, dc_projeto,  tp_projeto, id_orientador) SELECT ?, ?, ?, id_usuario FROM usuario WHERE nm_usuario = ?";
+    const sql = "INSERT INTO projeto (nm_projeto, dc_projeto, tp_projeto, id_orientador, url) SELECT ?, ?, ?, id_usuario, ? FROM usuario WHERE nm_usuario = ?";
 
-
-    connection.query(sql, [nome, desc, tipo, orientador], function (err, results) {
+    connection.query(sql, [nome, desc, tipo, url, orientador], function (err, results) {
         if (err) {
             console.log(err);
             return res.json({ success: false, message: 'Erro ao criar projeto.' });
+
+        } else if (results.changedRows == 0) {
+            return res.json({ success: false, message: 'Erro ao criar projeto: Orientador não registrado.' });
+
         } else {
             console.log(results);
             const idProjeto = results.insertId;
@@ -287,11 +377,12 @@ app.post('/adicionarProjeto', function (req, res) {
             connection.query(sqlAluno, [idProjeto, req.session.nome], function (err2, results2) {
                 if (err2) {
                     console.log("Aluno err: ", err2);
+                    return res.json({ success: false, message: 'Erro ao criar projeto.' });
                 } else {
                     console.log("Aluno results: ", results2);
+                    return res.json({ success: true, message: 'Projeto criado com sucesso!' })
                 }
             })
-            return res.json({ success: true, message: 'Projeto criado com sucesso!' })
         }
     })
 })

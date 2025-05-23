@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir senha</title>
+</head>
+
+<body>
+    <form action="/nova-senha" id="alteraSenha">
+        <input type="hidden" name="email" value="<%= email %>">
+        <input type="hidden" name="token" value="<%= token %>">
+
+        <input type="password" id="novaSenha" placeholder="Digite sua nova senha..." minlength="8" required>
+        <input type="password" id="novaSenhaConfirm" placeholder="Confirme sua nova senha..." oninput="verificaSenha()" required>
+        <button class="botao" type="button" onclick="verSenha()">👁</button>
+        <button type="submit">Redefinir</button>
+
+        <p id="message"></p>
+        <p id="confirmPass"></p>
+    </form>
+
+    <script>
+        function verSenha() {
+            const senha = document.getElementById('novaSenha');
+
+            if (senha.type == 'text') {
+                document.getElementById('novaSenha').type = 'password';
+                document.getElementById('novaSenhaConfirm').type = 'password';
+            } else {
+                document.getElementById('novaSenha').type = 'text';
+                document.getElementById('novaSenhaConfirm').type = 'text';
+            }
+        }
+
+        function verificaSenha() {
+            const senha = document.getElementById('novaSenha').value;
+            const confirm = document.getElementById('novaSenhaConfirm').value;
+            const msg = document.getElementById('confirmPass');
+
+            if (senha !== confirm) {
+                msg.textContent = 'As senhas não conhecidem!';
+                msg.style.color = 'red';
+            } else {
+                msg.textContent = '';
+            }
+        }
+
+        document.getElementById('alteraSenha').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email = '<%=email%>';
+            const senha = document.getElementById('novaSenha').value;
+
+            fetch('/redefinirSenha', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, senha })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById('message');
+                    if (data.success) {
+                        messageDiv.style.color = 'rgb(0, 255, 0)';
+                        messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
+                        setTimeout(() => {
+                            window.location.href = ('/login');
+                        }, 3000)
+                    } else {
+                        messageDiv.style.color = 'red';
+                        messageDiv.innerHTML = `<p"><strong>${data.message}</strong></p>`;
+                    }
+                })
+                .catch(error => console.error('Erro ao salvar:', error));
+        })
+    </script>
+</body>
+
+</html>

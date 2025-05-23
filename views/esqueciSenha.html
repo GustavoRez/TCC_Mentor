@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <title>Esqueci minha senha</title>
+</head>
+<body>
+    <form id="recuperador" method="post">
+        <input type="text" id="email" placeholder="Digite seu email...">
+        <p id="message"></p>
+        <input type="submit">
+    </form>
+
+    <script>
+        document.getElementById('recuperador').addEventListener('submit', function (e) {
+            const email = document.getElementById('email').value;
+            e.preventDefault();
+
+            fetch('/esqueciSenha', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById('message');
+                    if (data.success) {
+                        messageDiv.style.color = 'rgb(0, 255, 0)';
+                        messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
+
+                    } else {
+                        messageDiv.style.color = 'red';
+                        messageDiv.innerHTML = `<p"><strong>${data.message}</strong></p>`;
+                    }
+                })
+                .catch(error => console.error('Erro ao salvar:', error));
+        })
+    </script>
+</body>
+</html>

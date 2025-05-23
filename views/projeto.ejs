@@ -85,7 +85,7 @@
                 .then(res => res.json())
                 .then(data => {
                     const chat = document.getElementById('chat');
-                    chat.innerHTML = ''; // limpa antes de renderizar
+                    chat.innerHTML = '';
 
                     data.forEach(msg => {
                         chat.innerHTML += `
