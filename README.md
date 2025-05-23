@@ -78,7 +78,7 @@ yarn add node axios ejs express express-session form-data multer mysql
 
 E também com pip
 ```bash
-pip install fastapi google-genai PyMuPDF pydantic uvicorn
+pip install fastapi google-genai PyMuPDF pydantic uvicorn python-multipart
 ```
 
 ### 4. Rode o projeto
