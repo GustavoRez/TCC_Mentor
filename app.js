@@ -341,6 +341,19 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
     }
 });
 
+app.post('/chatbox', async (req, res) => {
+    const mensagem = req.body.msg;
+
+    const resposta = await axios.post("http://localhost:8000/chatbox", {
+        conteudo: mensagem,
+        loggedin: req.session.loggedin,
+    });
+    const mensagemIA = resposta.data.resposta;
+
+    res.json({ resposta: mensagemIA });
+});
+
+
 app.get('/adicionarProjeto', function (req, res) {
     if (req.session.loggedin) {
         const cargo = req.session.cargo;
