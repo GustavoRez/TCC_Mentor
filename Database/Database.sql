@@ -117,6 +117,7 @@ CREATE TABLE `usuario` (
   `cargo` enum('ALUN','ORIE','CORI') NOT NULL,
   `email` varchar(70) NOT NULL,
   `senha` varchar(45) NOT NULL,
+  `token` varchar(40) DEFAULT NULL,
   `token_recuperacao` varchar(40) DEFAULT NULL,
   `token_expira` datetime DEFAULT NULL,
   PRIMARY KEY (`id_usuario`)
