@@ -73,7 +73,7 @@ app.post('/esqueciSenha', function (req, res) {
     connection.query(sql, email, function (err, results) {
         if (err) throw err;
         if (results.length < 1) {
-            return res.json({ success: false, message: 'Esse email não possui cadastro!' });
+            return res.json({ success: false, message: 'Esse e-mail não possui cadastro ou ainda não foi verificado!' });
         }
         const token = crypto.randomBytes(20).toString('hex');
         const tokenSql = `UPDATE usuario SET token_recuperacao = ?, token_expira = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE email = ?`;
@@ -158,21 +158,67 @@ app.post('/cadastro', function (req, res) {
     connection.query(sql, email, function (err, results) {
         if (err) throw err;
         if (results.length < 1) {
-            const sql2 = "INSERT INTO usuario (nm_usuario, cargo, email, senha) VALUES (?, ?, ?, MD5(?))";
-            connection.query(sql2, [nome, cargo, email, senha], function (err2, results2) {
+            const token = crypto.randomBytes(20).toString('hex');
+            const sql2 = "INSERT INTO usuario (nm_usuario, cargo, senha, token) VALUES (?, ?, MD5(?), ?)";
+            connection.query(sql2, [nome, cargo, senha, token], function (err2, results2) {
                 if (err) {
                     console.log(err2);
                     return res.json({ success: false, message: 'Erro ao criar usuario.' });
                 } else {
                     console.log(results2);
-                    return res.json({ success: true, message: 'Perfil criado! Faça o login para continuar.' });
+                    let msg = 'Perfil criado! Faça o login para continuar. ';
+
+                    const transporter = nodemailer.createTransport({
+                        service: 'gmail',
+                        auth: {
+                            user: 'admtccmentor@gmail.com',
+                            pass: 'rsaq gcbr domf jbkv'
+                        }
+                    });
+
+                    const mailOptions = {
+                        from: 'TCC Mentor <admtccmentor@gmail.com>',
+                        to: email,
+                        subject: 'Confirmação de Cadastro - TCC Mentor',
+                        html: `
+                            <p>Bem-vindo! 🎉</p>
+                            <p>Para concluir seu cadastro, confirme seu e-mail clicando no link abaixo:</p>
+                            <a href="http://localhost:3000/confirmarEmail?token=${token}&email=${email}">Confirmar E-mail</a>
+                            `
+                    };
+
+                    transporter.sendMail(mailOptions, function (error, info) {
+                        if (error) {
+                            console.error(error);
+                            return res.json({ success: false, message: msg + 'Erro ao enviar o e-mail de verificação.' });
+                        } else {
+                            return res.json({ success: true, message: msg + 'E-mail de verificação enviado com sucesso!' });
+                        }
+                    });
                 }
 
             })
         } else
             return res.json({ success: false, message: 'Esse email já possui cadastro!' });
     })
-})
+});
+
+app.get('/confirmarEmail', function (req, res) {
+    const { token, email } = req.query;
+    const sql = 'UPDATE usuario SET email = ? WHERE token = ?';
+    let msg;
+
+    connection.query(sql, [email, token], function (err, results) {
+        if (err) {
+            console.log(err);
+            msg = 'Algo deu errado! Tente criar uma conta novamente mais tarde.';
+        } else {
+            console.log(results);
+            msg = 'E-mail verificado com sucesso!';
+        }
+        res.render('confirmaEmail', { msg });
+    })
+});
 
 app.post('/quit', function (req, res) {
     req.session.loggedin = false;
