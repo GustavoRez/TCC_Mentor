@@ -74,7 +74,7 @@ app.post('/esqueciSenha', function (req, res) {
     connection.query(sql, email, function (err, results) {
         if (err) throw err;
         if (results.length < 1) {
-            return res.json({ success: false, message: 'Esse email não possui cadastro!' });
+            return res.json({ success: false, message: 'Esse e-mail não possui cadastro ou ainda não foi verificado!' });
         }
         const token = crypto.randomBytes(20).toString('hex');
         const tokenSql = `UPDATE usuario SET token_recuperacao = ?, token_expira = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE email = ?`;
@@ -159,21 +159,67 @@ app.post('/cadastro', function (req, res) {
     connection.query(sql, email, function (err, results) {
         if (err) throw err;
         if (results.length < 1) {
-            const sql2 = "INSERT INTO usuario (nm_usuario, cargo, email, senha) VALUES (?, ?, ?, MD5(?))";
-            connection.query(sql2, [nome, cargo, email, senha], function (err2, results2) {
+            const token = crypto.randomBytes(20).toString('hex');
+            const sql2 = "INSERT INTO usuario (nm_usuario, cargo, senha, token) VALUES (?, ?, MD5(?), ?)";
+            connection.query(sql2, [nome, cargo, senha, token], function (err2, results2) {
                 if (err) {
                     console.log(err2);
                     return res.json({ success: false, message: 'Erro ao criar usuario.' });
                 } else {
                     console.log(results2);
-                    return res.json({ success: true, message: 'Perfil criado! Faça o login para continuar.' });
+                    let msg = 'Perfil criado! Faça o login para continuar. ';
+
+                    const transporter = nodemailer.createTransport({
+                        service: 'gmail',
+                        auth: {
+                            user: 'admtccmentor@gmail.com',
+                            pass: 'rsaq gcbr domf jbkv'
+                        }
+                    });
+
+                    const mailOptions = {
+                        from: 'TCC Mentor <admtccmentor@gmail.com>',
+                        to: email,
+                        subject: 'Confirmação de Cadastro - TCC Mentor',
+                        html: `
+                            <p>Bem-vindo! 🎉</p>
+                            <p>Para concluir seu cadastro, confirme seu e-mail clicando no link abaixo:</p>
+                            <a href="http://localhost:3000/confirmarEmail?token=${token}&email=${email}">Confirmar E-mail</a>
+                            `
+                    };
+
+                    transporter.sendMail(mailOptions, function (error, info) {
+                        if (error) {
+                            console.error(error);
+                            return res.json({ success: false, message: msg + 'Erro ao enviar o e-mail de verificação.' });
+                        } else {
+                            return res.json({ success: true, message: msg + 'E-mail de verificação enviado com sucesso!' });
+                        }
+                    });
                 }
 
             })
         } else
             return res.json({ success: false, message: 'Esse email já possui cadastro!' });
     })
-})
+});
+
+app.get('/confirmarEmail', function (req, res) {
+    const { token, email } = req.query;
+    const sql = 'UPDATE usuario SET email = ? WHERE token = ?';
+    let msg;
+
+    connection.query(sql, [email, token], function (err, results) {
+        if (err) {
+            console.log(err);
+            msg = 'Algo deu errado! Tente criar uma conta novamente mais tarde.';
+        } else {
+            console.log(results);
+            msg = 'E-mail verificado com sucesso!';
+        }
+        res.render('confirmaEmail', { msg });
+    })
+});
 
 app.post('/quit', function (req, res) {
     req.session.loggedin = false;
@@ -342,17 +388,43 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
     }
 });
 
-app.post('/chatbox', async (req, res) => {
-    const mensagem = req.body.msg;
+app.post('/chatbox', (req, res) => {
+    const { msg, idProjeto } = req.body;
 
-    const resposta = await axios.post("http://localhost:8000/chatbox", {
-        conteudo: mensagem,
-        loggedin: req.session.loggedin,
+    const sql = 'SELECT resumo FROM mensagem_chatbox WHERE id_projeto = ? ORDER BY data_envio DESC LIMIT 1';
+
+    connection.query(sql, [idProjeto], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Erro no banco' });
+        }
+
+        let resumoAntigo = '';
+        if (results.length > 0) {
+            resumoAntigo = results[0].resumo;
+        }
+
+        axios.post("http://localhost:8000/chatbox", {
+            conteudo: msg,
+            loggedin: req.session.loggedin,
+            resumo: resumoAntigo,
+        }).then((response) => {
+            const mensagemIA = response.data.resposta;
+            const resumoIA = response.data.resumo;
+
+            const sql2 = "INSERT INTO mensagem_chatbox (id_projeto, resumo) VALUES (?, ?)";
+            connection.query(sql2, [idProjeto, resumoIA], (err2) => {
+                if (err2) console.error(err2);
+            });
+
+            res.json({ resposta: mensagemIA });
+        }).catch(error => {
+            console.error(error);
+            res.status(500).json({ error: 'Erro na chamada da IA' });
+        });
     });
-    const mensagemIA = resposta.data.resposta;
-
-    res.json({ resposta: mensagemIA });
 });
+
 
 
 app.get('/adicionarProjeto', function (req, res) {
