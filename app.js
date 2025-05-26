@@ -14,6 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'images')));
 app.use('/uploads', express.static('public/uploads'));
+app.use(express.static(path.join(__dirname, 'Css')));
 
 app.set('view engine', 'ejs')
 
@@ -401,8 +402,6 @@ app.post('/adicionarProjeto', function (req, res) {
 })
 
 if (require.main === module) {
-    app.listen(3000, function () {
-        console.log("Aplicativo rodando na porta 3000.");
         connection.connect(function (err) {
             if (err) throw err;
             console.log("Database conectado!");

@@ -1,0 +1,118 @@
+
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #8ab6ff, #ffffff);
+  line-height: 1.6;
+  padding: 2rem;
+}
+
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo img {
+  width: 3rem;
+  height: 6em;
+}
+
+.navbar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    border: 0.1rem solid #000000;
+    padding: 1rem 2rem;
+}
+
+/* Logo */
+.navbar .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.navbar img {
+    height: 2.5rem;
+}
+
+/* Botões container */
+.navbar .buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Botão base */
+.navbar a {
+    text-decoration: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 0.3rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border: 0.1rem solid #A259FF;
+    transition: background-color 0.3s ease;
+}
+
+/* Login: transparente */
+.navbar a.login {
+    background-color: white;
+    color: #A259FF;
+}
+
+/* Cadastrar: preenchido */
+.navbar a.cadastrar {
+    background-color: #A259FF;
+    color: white;
+}
+
+main {
+  background-color: #fff;
+  border: 0.1rem solid #000000;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+  max-width: 50rem;
+  margin: 1rem auto;
+}
+
+section {
+  margin-bottom: 2rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+ul {
+  list-style: disc inside;
+  padding-left: 1rem;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+  main {
+    padding: 1rem;
+  }
+
+  nav button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}

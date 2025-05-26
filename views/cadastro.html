@@ -5,41 +5,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/Global.css">
+    <link rel="stylesheet" href="/Cadastro.css">
     <title>Se cadastre</title>
 </head>
 
 <body>
-    <a href="/"><button>
-            <p>Voltar</p>
-        </button></a>
-    <div>
-        <h1>Faz o cadastro dog</h1>
-    </div>
-    <form id="cadastro" method="post">
-        <label for="email">Email: </label>
-        <input type="text" id="email" placeholder="Insira seu email..." required>
 
-        <label for="nome">Nome: </label>
-        <input type="text" id="nome" placeholder="Insira seu nome completo..." required>
+<div class="Cadastro-container">
+    <a class="voltar" href="/">
+            <p>⬅</p>
+    </a>
+        <h1>Cadastro</h1>
+        <form id="cadastro" method="post">
+            <input type="email" id="email" placeholder="Email" required>
+        
+            <input type="text" id="nome" placeholder="Seu nome completo" required>
 
-        <label for="cargo">Sua função: </label>
-        <select id="cargo">
-            <option value="ALUN">Aluno</option>
-            <option value="ORIE">Orientador/Coorientador</option>
-        </select>
-
-        <label for="senha">Senha: (minimo 8 digitos)</label>
-        <input type="password" id="senha" placeholder="Insira sua senha..." required autocomplete="off" minlength="8">
-
-        <label for="confirm">Confirme sua senha:</label>
-        <input type="password" id="confirm" placeholder="Confirme sua senha..." required autocomplete="off"
+            <label for="cargo">Sua função: </label>
+                <select id="cargo">
+                    <option value="ALUN">Aluno</option>
+                    <option value="ORIE">Orientador/Coorientador</option>
+                </select>
+            
+            <input type="password" id="senha" placeholder="Insira sua senha..." required autocomplete="off" minlength="8">
+            
+            <input type="password" id="confirm" placeholder="Confirme sua senha..." required autocomplete="off"
             oninput="verificaSenha()">
-        <button class="botao" type="button" onclick="verSenha()">👁</button>
-        <p id="confirmPass"></p>
+            <p id="confirmPass"></p>
+            
+            <a class="verSenha" onclick="verSenha()">👁</a>
+            
+            <a class="esqueci" href="/esqueciSenha">Esqueci minha senha!</a>
 
-        <p id="message"></p>
-        <input type="submit">
-    </form>
+            <p id="message"></p>
+            <button type="submit">Cadastrar</button>
+        </form>
+    </div>
+
+
+
+
 
     <script>
         function verSenha() {
