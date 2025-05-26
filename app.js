@@ -387,17 +387,43 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
     }
 });
 
-app.post('/chatbox', async (req, res) => {
-    const mensagem = req.body.msg;
+app.post('/chatbox', (req, res) => {
+    const { msg, idProjeto } = req.body;
 
-    const resposta = await axios.post("http://localhost:8000/chatbox", {
-        conteudo: mensagem,
-        loggedin: req.session.loggedin,
+    const sql = 'SELECT resumo FROM mensagem_chatbox WHERE id_projeto = ? ORDER BY data_envio DESC LIMIT 1';
+
+    connection.query(sql, [idProjeto], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Erro no banco' });
+        }
+
+        let resumoAntigo = '';
+        if (results.length > 0) {
+            resumoAntigo = results[0].resumo;
+        }
+
+        axios.post("http://localhost:8000/chatbox", {
+            conteudo: msg,
+            loggedin: req.session.loggedin,
+            resumo: resumoAntigo,
+        }).then((response) => {
+            const mensagemIA = response.data.resposta;
+            const resumoIA = response.data.resumo;
+
+            const sql2 = "INSERT INTO mensagem_chatbox (id_projeto, resumo) VALUES (?, ?)";
+            connection.query(sql2, [idProjeto, resumoIA], (err2) => {
+                if (err2) console.error(err2);
+            });
+
+            res.json({ resposta: mensagemIA });
+        }).catch(error => {
+            console.error(error);
+            res.status(500).json({ error: 'Erro na chamada da IA' });
+        });
     });
-    const mensagemIA = resposta.data.resposta;
-
-    res.json({ resposta: mensagemIA });
 });
+
 
 
 app.get('/adicionarProjeto', function (req, res) {

@@ -6,74 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
     <title>Página Incial!</title>
-    <style>
-        #chat-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #0084ff;
-            color: white;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 999;
-        }
-
-        #chat-window {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 300px;
-            height: 400px;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            display: none;
-            flex-direction: column;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            z-index: 999;
-        }
-
-        #chat-header {
-            background: #0084ff;
-            color: white;
-            padding: 10px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #chat-body {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-            font-size: 14px;
-        }
-
-        #chat-input {
-            display: flex;
-            padding: 10px;
-            border-top: 1px solid #ccc;
-        }
-
-        #chat-input input {
-            flex: 1;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        #chat-input button {
-            margin-left: 5px;
-            padding: 5px 10px;
-        }
-    </style>
 </head>
 
 <body>
@@ -119,75 +51,13 @@
     <!-- Fim projetos -->
 
     <!-- Comeco funcoes rodape-->
-    <%if(!( cargo==='ALUN' && nomeProjetos.length> 0 )){%>
-        <a href="adicionarProjeto"><button>+</button></a>
-        <%}%>
+    <div>
+        <%if(!( cargo==='ALUN' && nomeProjetos.length> 0 )){%>
+            <a href="adicionarProjeto"><button>+</button></a>
+            <%}%>
+    </div>
 
-            <div id="chat-button" onclick="toggleChat()">
-                💬
-            </div>
-
-            <div id="chat-window">
-                <div id="chat-header">
-                    Chat com Tessy *(chat temporário)*
-                    <span onclick="toggleChat()">✖</span>
-                </div>
-                <div id="chat-body">
-                </div>
-                <div id="chat-input">
-                    <form id="msgChat" enctype="multipart/form-data">
-                        <input type="text" name="mensagem" id="msg" placeholder="Digite sua mensagem..."
-                            autocomplete="off">
-                        <button type="submit">Enviar</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Fim funcoes rodape -->
-
-
-            <script>
-                function toggleChat() {
-                    const chatWindow = document.getElementById('chat-window');
-                    chatWindow.style.display = chatWindow.style.display === 'none' || chatWindow.style.display === '' ? 'flex' : 'none';
-                }
-
-                document.getElementById('msgChat').addEventListener('submit', async function (e) {
-                    e.preventDefault();
-
-                    const msg = document.getElementById('msg').value;
-                    const chatBody = document.getElementById('chat-body');
-                    if (msg === '') return;
-                    
-                    const userMsg = document.createElement('div');
-                    userMsg.textContent = `Você: ${msg}`;
-                    chatBody.appendChild(userMsg);
-                    
-                    
-                    if (!msg) {
-                        alert("Digite uma mensagem.");
-                        return;
-                    }
-                    
-                    resposta = await fetch('/chatbox', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ msg })
-                    })
-
-                    document.getElementById('msg').value = '';
-                    chatBody.scrollTop = chatBody.scrollHeight;
-                    
-                    const dados = await resposta.json();
-                    const iaMsg = document.createElement('div');
-                    iaMsg.textContent = `IA: ${dados.resposta}`;
-                    chatBody.appendChild(iaMsg);
-
-
-                });
-            </script>
+    <!-- Fim funcoes rodape -->
 </body>
 
 </html>

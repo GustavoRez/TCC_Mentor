@@ -39,6 +39,20 @@ chatbox_config = types.GenerateContentConfig(
     ''',
     )
 chatChatbox = client.chats.create(model=modelo, config=chatbox_config)
+    
+chatResumo_config = types.GenerateContentConfig(
+    system_instruction = '''
+        Você é um assistente que resume as mensagens da IA chamada Tessy de forma
+        objetiva, contínua e direta. Seu objetivo é manter um resumo contínuo da
+        conversa entre Tessy e o aluno, focando nas decisões, sugestões e próximos
+        passos discutidos durante o desenvolvimento do TCC. Cada nova entrada deve
+        considerar o que já foi discutido anteriormente, mantendo coerência com os
+        resumos anteriores e evitando repetições desnecessárias. Evite frases como
+        "Tessy perguntou..." ou "Tessy disse...", a menos que sejam essenciais para
+        o contexto. Não use formatação ou floreios. Seja claro, conciso e direto.
+    ''',
+)
+chatResumo = client.chats.create(model=modelo, config=chatResumo_config)
 
 
 class Comentario(BaseModel):
@@ -47,6 +61,7 @@ class Comentario(BaseModel):
 class ChatBox(BaseModel):
     loggedin: bool
     conteudo: str
+    resumo: str
     
 
 @app.post("/analisar")
@@ -72,8 +87,10 @@ async def analisar_pdf(file: UploadFile = File(...)):
 
 @app.post("/chatbox")
 def chatbox(msg: ChatBox):
-    while msg.loggedin == True:
+    while msg.loggedin == True or msg.conteudo.lower() == 'reiniciar':
         prompt = msg.conteudo.lower()
-        response = chatChatbox.send_message(prompt)
+        promptContextualizado = f"Resumo da conversa:\n{msg.resumo}\n\nNova mensagem do usuário:\n{prompt}"
+        response = chatChatbox.send_message(promptContextualizado)
+        resumoCompleto = chatResumo.send_message(f'{msg.resumo}\n{response}')
     
-        return{"resposta": response.text}
+        return{"resposta": response.text, "resumo": resumoCompleto.text}

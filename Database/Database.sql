@@ -46,6 +46,33 @@ INSERT INTO `mensagem_chat` VALUES (1,1,'ALUN','Olá! Tudo bem?',NULL,'2025-05-1
 UNLOCK TABLES;
 
 --
+-- Table structure for table `mensagem_chatbox`
+--
+
+DROP TABLE IF EXISTS `mensagem_chatbox`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `mensagem_chatbox` (
+  `id_mensagem` int(11) NOT NULL AUTO_INCREMENT,
+  `id_projeto` int(11) NOT NULL,
+  `resumo` text NOT NULL,
+  `data_envio` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_mensagem`),
+  KEY `fk_mensagem_projeto` (`id_projeto`),
+  CONSTRAINT `fk_mensagem_projeto` FOREIGN KEY (`id_projeto`) REFERENCES `projeto` (`id_projeto`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `mensagem_chatbox`
+--
+
+LOCK TABLES `mensagem_chatbox` WRITE;
+/*!40000 ALTER TABLE `mensagem_chatbox` DISABLE KEYS */;
+/*!40000 ALTER TABLE `mensagem_chatbox` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `projeto`
 --
 
@@ -118,10 +145,10 @@ CREATE TABLE `usuario` (
   `email` varchar(70) NOT NULL,
   `senha` varchar(45) NOT NULL,
   `token` varchar(40) DEFAULT NULL,
-  `token_recuperacao` varchar(40) DEFAULT NULL,
   `token_expira` datetime DEFAULT NULL,
+  `token_recuperacao` varchar(40) DEFAULT NULL,
   PRIMARY KEY (`id_usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -130,7 +157,7 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
-INSERT INTO `usuario` VALUES (1,'Gustavo','ALUN','gustavin@gmail.com','81dc9bdb52d04dc20036dbd8313ed055',NULL,NULL),(2,'Joseffe Perigoso','ORIE','joseffeperigo@gmail.com','81dc9bdb52d04dc20036dbd8313ed055',NULL,NULL),(3,'Pupo','ORIE','pupopo@gmail.com','81dc9bdb52d04dc20036dbd8313ed055',NULL,NULL),(7,'Wellington','ALUN','wellwell@gmail.com','81dc9bdb52d04dc20036dbd8313ed055',NULL,NULL),(9,'Gustavo Garcia','ALUN','gustavorezende181@gmail.com','25d55ad283aa400af464c76d713c07ad',NULL,NULL);
+INSERT INTO `usuario` VALUES (1,'Gustavo','ALUN','gustavin@gmail.com','81dc9bdb52d04dc20036dbd8313ed055',NULL,NULL,NULL),(2,'Joseffe Perigoso','ORIE','joseffeperigo@gmail.com','81dc9bdb52d04dc20036dbd8313ed055',NULL,NULL,NULL),(3,'Pupo','ORIE','pupopo@gmail.com','81dc9bdb52d04dc20036dbd8313ed055',NULL,NULL,NULL),(7,'Wellington','ALUN','wellwell@gmail.com','81dc9bdb52d04dc20036dbd8313ed055',NULL,NULL,NULL),(9,'Gustavo Garcia','ALUN','gustavorezende181@gmail.com','25d55ad283aa400af464c76d713c07ad',NULL,NULL,NULL);
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -143,4 +170,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-23 18:57:22
+-- Dump completed on 2025-05-26 14:35:23
