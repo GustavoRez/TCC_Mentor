@@ -50,10 +50,10 @@
                             <%= tipos[i] %>
                         </p>
                         <p>Participantes:
-                            <%= orientadores[i] %>
+                            <%= alunos[i] %>
                         </p>
                         <p>Orientadores:
-                            <%= alunos[i] %>
+                            <%= orientadores[i] %>
                         </p>
                     </div>
                 </a>
@@ -65,7 +65,7 @@
         <div class="botoes">
 
         <div>
-            <%if(!( cargo==='ALUN' && nomeProjetos.length> 0 )){%>
+            <%if(!( cargo==='ALUN' && nomeProjetos.length> 10 )){%>
                 <a href="adicionarProjeto">
                     <button class="add">+</button>
                 </a>
