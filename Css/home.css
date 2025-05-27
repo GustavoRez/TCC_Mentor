@@ -1,3 +1,89 @@
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background: white;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 0.1rem solid black;
+}
+
+.user-info, .cargo {
+    font-size: 1.2rem;
+}
+
+.cargo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem;
+}
+
+.sair {
+    padding: 0.3rem 0.8rem;
+    border: 0.1rem solid black;
+    background: rgb(248, 0, 0);
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 0.3rem;
+    color: white;
+}
+
+
+.content {
+    padding: 2rem;
+    border: 0.1rem solid black;
+    margin: 0 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 30rem;
+    position: relative;
+}
+
+.projeto {
+    border: 0.1rem solid black;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    max-width: 40rem;
+}
+
+.projeto h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.projeto p {
+    font-size: 1rem;
+    margin: 0.3rem 0;
+}
+
+.botoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+}
+
+.botoes button {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 0.1rem solid black;
+    font-size: 1.5rem;
+    background: white;
+    cursor: pointer;
+}
+
+/*
 chat-button {
     position: fixed;
     bottom: 20px;
