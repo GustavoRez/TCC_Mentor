@@ -5,61 +5,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
-    <link rel="stylesheet" href="Css/Global.css">
-    <link rel="stylesheet" href="Css/Home.css">
-    <title>Página Incial!</title>
+    <link rel="stylesheet" href="/Global.css">
+    <link rel="stylesheet" href="/home.css">
+    <title>Home</title>
 </head>
 
 <body>
     <!-- Inicio navbar -->
-    <h2>
-        Olá, <%=nome%>!
-    </h2>
-    <h1>
-        <% if(cargo==='ALUN' ){%>
-            Aluno
-            <%} else {%>
-                Professor
+    <header class="navbar">
+        <div class="user-info">
+            <h2>
+                Olá, <%=nome%>
+            </h2>
+        </div>
+        <div class="cargo">
+            <h1>
+                <% if(cargo==='ALUN' ){%>
+                        Aluno
+                <%} else {%>
+                        Professor
                 <%}%>
-    </h1>
-
-    <form action="/quit" method="post">
-        <input type="submit" value="Sair">
-    </form>
+             </h1>
+        </div>
+            <form action="/quit" method="post">
+                <input type="submit" class="sair" value="Sair">
+            </form>
+    </header>
     <!-- Fim navbar -->
 
     <!-- Inicio projetos -->
-    <div>
-        <%for(var i=0; i < nomeProjetos.length; i++){%>
-            <% let projectURL=[nomeProjetos[i].toLowerCase().replace(/\s+/g, '-' )]%>
-                <a href="/projeto-<%=projectURL%>">
+    <main class="content">
+
+    <% if (nomeProjetos.length > 0) { %>
+        <section class="projeto">
+                <%for(var i=0; i < nomeProjetos.length; i++){%>
+                    <% let projectURL=[nomeProjetos[i].toLowerCase().replace(/\s+/g, '-' )]%>
+                    <a href="/projeto-<%=projectURL%>">
                     <div>
-                        <h2>
+                        <h2>Nome do projeto:
                             <%= nomeProjetos[i] %>
                         </h2>
-                        <p>
+
+                        <p>Tipo:
                             <%= tipos[i] %>
                         </p>
-                        <p>
+                        <p>Participantes:
                             <%= orientadores[i] %>
                         </p>
-                        <p>
+                        <p>Orientadores:
                             <%= alunos[i] %>
                         </p>
                     </div>
                 </a>
                 <%}%>
-    </div>
-    <!-- Fim projetos -->
+        </section>
+    <% } %>
 
-    <!-- Comeco funcoes rodape-->
-    <div>
-        <%if(!( cargo==='ALUN' && nomeProjetos.length> 0 )){%>
-            <a href="adicionarProjeto"><button>+</button></a>
+        <!-- Botões -->
+        <div class="botoes">
+
+        <div>
+            <%if(!( cargo==='ALUN' && nomeProjetos.length> 0 )){%>
+                <a href="adicionarProjeto">
+                    <button class="add">+</button>
+                </a>
             <%}%>
-    </div>
+        </div>
+        
+            <button class="chat">💬</button>
+        </div>
+    </main>
 
-    <!-- Fim funcoes rodape -->
 </body>
-
 </html>
