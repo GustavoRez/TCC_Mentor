@@ -102,6 +102,9 @@
             <div class="mensagem">
                 <h2>
                     <%= msg.mensagem %>
+                        <% if(msg.remetente=='ORIE' ) { %>
+                            <button class="analisar-btn" onclick="this, '<%= msg.mensagem %>'">Analisar</button>
+                            <% } %>
                 </h2>
                 <h4>
                     <%= msg.data_envio %>
@@ -132,7 +135,8 @@
         </div>
         <div id="chat-input">
             <form id="msgChat" enctype="multipart/form-data">
-                <input type="text" name="mensagem" id="msg_chat" placeholder="Digite sua mensagem..." autocomplete="off">
+                <input type="text" name="mensagem" id="msg_chat" placeholder="Digite sua mensagem..."
+                    autocomplete="off">
                 <button type="submit">Enviar</button>
             </form>
         </div>
@@ -168,6 +172,7 @@
         });
 
         function buscarMensagens() {
+            const cargo ='<%= cargo %>'
             fetch(`/mensagens?idProjeto=${idProjeto}`)
                 .then(res => res.json())
                 .then(data => {
@@ -177,7 +182,7 @@
                     data.forEach(msg => {
                         chat.innerHTML += `
                     <div class="mensagem">
-                        ${msg.mensagem ? `<h2>${msg.mensagem}</h2>` : ''}
+                        ${msg.mensagem ? `<h2>${msg.mensagem}  ${cargo === 'ALUN' ? `${msg.remetente === 'ORIE' ? `<button onclick="analisaMsg(this, '${msg.mensagem}')">Analisar</button>` : ''}` : ''}</h2>` : ''}
                         ${msg.arquivo_pdf ? `<a href="/uploads/${msg.arquivo_pdf}" target="_blank">📎 Ver PDF</a>` : ''}
                         <h4>${msg.data_envio}</h4>
                         <h4>${msg.remetente}</h4>
@@ -228,9 +233,21 @@
             const iaMsg = document.createElement('div');
             iaMsg.textContent = `IA: ${dados.resposta}`;
             chatBody.appendChild(iaMsg);
-
-
         });
+
+        function analisaMsg(btn, msg) {
+            btn.disabled = true;
+            btn.textContent = 'Analisando...';
+
+            fetch('/analisaMsg', {
+                method: 'POST',
+                headers:{
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ msg, idProjeto })
+            })
+                .then(response => response.json())
+        }
     </script>
 </body>
 

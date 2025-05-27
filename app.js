@@ -341,20 +341,6 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
             });
         });
 
-        if (remetente === 'ORIE' && mensagem) {
-            const respostaIA = await axios.post("http://localhost:8000/analisar", {
-                conteudo: mensagem,
-            });
-            const mensagemIA = respostaIA.data.resposta;
-
-            await new Promise((resolve, reject) => {
-                connection.query(sql, [idProjeto, 'IA', mensagemIA, null], (err, results) => {
-                    if (err) return reject(err);
-                    resolve(results);
-                });
-            });
-        }
-
         if (remetente === 'ORIE' && arquivo_pdf) {
             const pdfPath = path.join(__dirname, 'public/uploads', arquivo_pdf);
 
@@ -387,6 +373,27 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
         res.status(500).json({ error: 'Erro ao enviar ou processar a mensagem' });
     }
 });
+
+app.post('/analisaMsg', async function (req, res) {
+    const mensagem = req.body.msg;
+    const idProjeto = req.body.idProjeto;
+
+    const sql = `INSERT INTO mensagem_chat (id_projeto, remetente, mensagem) VALUES (?, ?, ?)`
+
+    const respostaIA = await axios.post("http://localhost:8000/analisar", {
+        conteudo: mensagem,
+    });
+    const mensagemIA = respostaIA.data.resposta;
+
+    await new Promise((resolve, reject) => {
+        connection.query(sql, [idProjeto, 'IA', mensagemIA, null], (err, results) => {
+            if (err) return reject(err);
+            console.log(results)
+            resolve(results);
+        });
+    });
+
+})
 
 app.post('/chatbox', (req, res) => {
     const { msg, idProjeto } = req.body;
@@ -484,4 +491,3 @@ if (require.main === module) {
 } else {
     module.exports = app;
 }
-
