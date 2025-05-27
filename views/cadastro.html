@@ -12,30 +12,31 @@
 
 <body>
 
-<div class="Cadastro-container">
-    <a class="voltar" href="/">
+    <div class="Cadastro-container">
+        <a class="voltar" href="/">
             <p>⬅</p>
-    </a>
+        </a>
         <h1>Cadastro</h1>
         <form id="cadastro" method="post">
             <input type="email" id="email" placeholder="Email" required>
-        
+
             <input type="text" id="nome" placeholder="Seu nome completo" required>
 
             <label for="cargo">Sua função: </label>
-                <select id="cargo">
-                    <option value="ALUN">Aluno</option>
-                    <option value="ORIE">Orientador/Coorientador</option>
-                </select>
-            
-            <input type="password" id="senha" placeholder="Insira sua senha..." required autocomplete="off" minlength="8">
-            
+            <select id="cargo">
+                <option value="ALUN">Aluno</option>
+                <option value="ORIE">Orientador/Coorientador</option>
+            </select>
+
+            <input type="password" id="senha" placeholder="Insira sua senha..." required autocomplete="off"
+                minlength="8" oninput="verificaSenha()">
+
             <input type="password" id="confirm" placeholder="Confirme sua senha..." required autocomplete="off"
-            oninput="verificaSenha()">
+                oninput="verificaSenha()">
             <p id="confirmPass"></p>
-            
+
             <a class="verSenha" onclick="verSenha()">👁</a>
-            
+
             <a class="esqueci" href="/esqueciSenha">Esqueci minha senha!</a>
 
             <p id="message"></p>
