@@ -459,7 +459,7 @@ app.post('/adicionarProjeto', function (req, res) {
             console.log(err);
             return res.json({ success: false, message: 'Erro ao criar projeto.' });
 
-        } else if (results.changedRows == 0) {
+        } else if (results.affectedRows == 0) {
             return res.json({ success: false, message: 'Erro ao criar projeto: Orientador não registrado.' });
 
         } else {
