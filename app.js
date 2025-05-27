@@ -474,6 +474,8 @@ app.post('/adicionarProjeto', function (req, res) {
 })
 
 if (require.main === module) {
+    app.listen(3000, function () {
+        console.log("Aplicativo rodando na porta 3000.");
         connection.connect(function (err) {
             if (err) throw err;
             console.log("Database conectado!");
