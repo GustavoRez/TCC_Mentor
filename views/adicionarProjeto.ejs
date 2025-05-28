@@ -5,19 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
-    <link rel="stylesheet" href="/Global.css">
+    <link rel="stylesheet" href="/global.css">
     <link rel="stylesheet" href="/adProjeto.css">
     <title>Adicionar projeto.</title>
 </head>
 
 <body>
-    <h1>Adicione seu TCC</h1>
+    
+<div class="adProjeto">        
+    <a class="voltar" href="home">
+            <p>⬅</p>
+        </a>
+        <h1>Adicione seu TCC</h1>
+
     <form id="addProject" method="post">
+
         <label for="nome">Nome do projeto:</label>
-        <input type="text" id="nome" placeholder="Insira o nome..." maxlength="60" required>
+        <input type="text" id="nome" placeholder="Insira o nome" maxlength="60" required>
 
         <label for="desc">Descrição do projeto:</label>
-        <input type="text" id="desc" placeholder="Insira uma breve descrição...">
+        <input type="text" id="desc" placeholder="Insira uma breve descrição">
 
         <label for="tipo">Tipo do projeto:</label>
         <select id="tipo">
@@ -28,14 +35,16 @@
 
         <%if(cargo=='ALUN' ) {%>
             <label for="orient">Orientador:</label>
-            <input type="text" id="orient" placeholder="Insira o nome completo do orientador..." maxlength="60"
+            <input type="text" id="orient" placeholder="Nome completo do orientador..." maxlength="60"
                 required>
 
             <button type="button" id="toggleCoorientador" onclick="adicionarCoorientador()">+</button>
+            
             <div id="coorient" hidden>
                 <label for="coor">Coorientador:</label>
-                <input type="text" id="coor" placeholder="Insira o nome completo do coorientador..." maxlength="60">
+                <input type="text" id="coor" placeholder="Nome completo do coorientador..." maxlength="60">
             </div>
+            
             <%} else { %>
                 <div id="alunos-container">
                     <label>Alunos:</label>
@@ -46,9 +55,8 @@
                     <p id="message"></p>
                     <input type="submit">
     </form>
-        <a class="voltar" href="home">
-            <p>Voltar</p>
-        </a>
+</div>
+
     <script>
         function adicionarCoorientador() {
             const coorientador = document.getElementById('coorient');

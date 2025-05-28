@@ -28,6 +28,24 @@ a {
 
 .esqueci {
     color: #51b8e0;
+    align-items: start;
+}
+
+.input-senha {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-senha input {
+    width: 100%;
+    padding-right: 2.5rem;
+}
+
+.input-senha .verSenha {
+    position: absolute;
+    right: 0.75rem;
+    cursor: pointer;
 }
 
 .login-container {

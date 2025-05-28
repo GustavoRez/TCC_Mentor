@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/global.css">
+    <link rel="stylesheet" href="/SenhaEsqueci.css">
     <title>Esqueci minha senha</title>
 </head>
+
 <body>
-    <form id="recuperador" method="post">
-        <input type="text" id="email" placeholder="Digite seu email...">
-        <p id="message"></p>
-        <input type="submit">
-    </form>
+    <div class="esqueci">
+        <a class="voltar" href="/Login">
+            <p>⬅</p>
+        </a>
+        <form id="recuperador" method="post">
+            <input type="text" id="email" placeholder="Digite seu email...">
+            <p id="message"></p>
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
 
     <script>
         document.getElementById('recuperador').addEventListener('submit', function (e) {
@@ -41,4 +50,5 @@
         })
     </script>
 </body>
+
 </html>
