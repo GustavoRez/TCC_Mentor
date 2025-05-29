@@ -21,60 +21,63 @@
         <div class="cargo">
             <h1>
                 <% if(cargo==='ALUN' ){%>
-                        Aluno
-                <%} else {%>
+                    Aluno
+                    <%} else {%>
                         Professor
-                <%}%>
-             </h1>
+                        <%}%>
+            </h1>
         </div>
-            <form action="/quit" method="post">
-                <input type="submit" class="sair" value="Sair">
-            </form>
+        <form action="/quit" method="post">
+            <input type="submit" class="sair" value="Sair">
+        </form>
     </header>
     <!-- Fim navbar -->
 
     <!-- Inicio projetos -->
     <main class="content">
 
-    <% if (nomeProjetos.length > 0) { %>
+        <% if(nomeProjetos[0] != null){ %>
         <section class="projeto">
-                <%for(var i=0; i < nomeProjetos.length; i++){%>
+            <%for(var i=0; i < nomeProjetos.length; i++){%>
+                <% if (nomeProjetos[i] != null) { %>
                     <% let projectURL=[nomeProjetos[i].toLowerCase().replace(/\s+/g, '-' )]%>
-                    <a href="/projeto-<%=projectURL%>">
-                    <div>
-                        <h2>Nome do projeto:
-                            <%= nomeProjetos[i] %>
-                        </h2>
+                        <a href="/projeto-<%=projectURL%>">
+                            <div>
+                                <h2>Nome do projeto:
+                                    <%= nomeProjetos[i] %>
+                                </h2>
 
-                        <p>Tipo:
-                            <%= tipos[i] %>
-                        </p>
-                        <p>Participantes:
-                            <%= alunos[i] %>
-                        </p>
-                        <p>Orientadores:
-                            <%= orientadores[i] %>
-                        </p>
-                    </div>
-                </a>
-                <%}%>
+                                <p>Tipo:
+                                    <%= tipos[i] %>
+                                </p>
+                                <p>Participantes:
+                                    <%= alunos[i] %>
+                                </p>
+                                <p>Orientadores:
+                                    <%= orientadores[i] %>
+                                </p>
+                            </div>
+                        </a>
+                        <%}%>
+                <% } %>
         </section>
-    <% } %>
+        <% } %>
 
-        <!-- Botões -->
+        <!-- Botoes -->
         <div class="botoes">
 
-        <div>
-            <%if(!( cargo==='ALUN' && nomeProjetos.length> 10 )){%>
-                <a href="adicionarProjeto">
-                    <button class="add">+</button>
-                </a>
-            <%}%>
-        </div>
-        
+            <div>
+                <%if(!( cargo==='ALUN' && nomeProjetos.length> 10 )){%>
+                    <a href="adicionarProjeto">
+                        <button class="add">+</button>
+                    </a>
+                    <%}%>
+            </div>
+
             <button class="chat">💬</button>
         </div>
     </main>
 
 </body>
+
 </html>

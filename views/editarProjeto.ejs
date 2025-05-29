@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <title>Edite seu projeto!</title>
+</head>
+
+<body>
+    <form id="alterarIntegrantes" method="post">
+
+        <input type="text" value="<%= orientador %>" disabled>
+        <% alunos.forEach((aluno, index)=> { %>
+            <input type="text" name="aluno<%= index %>" value="<%= aluno %>" disabled>
+            <div id="alunos-container">
+                <input type="button" name="button<%= index %>" value="Remover"
+                    onclick="removeAluno('<%= idAlunos[index] %>', '<%= aluno %>')">
+            </div>
+            <% }) %>
+                <input type="button" value="+" onclick="adicionarAluno()">
+                <p id="message"></p>
+
+                <input type="submit">
+    </form>
+
+
+
+
+    <script>
+        let novosAlunos = 0;
+        function adicionarAluno() {
+            const tipo = '<%= tipo %>';
+            let limite = 0;
+            if (tipo === 'Relatório Técnico' || tipo === 'Monografia') limite = 3;
+            else if (tipo === 'Artigo Científico') limite = 2;
+
+            // caso tenha um espaco entre % e -, remova-o
+            let alunos = <%- JSON.stringify(alunos) %>;
+            const messageDiv = document.getElementById('message');
+            if (alunos.length + novosAlunos >= limite) {
+                messageDiv.innerHTML = `<p"><strong>Número limite de alunos atingido (3 alunos).</strong></p>`;
+            } else {
+                const container = document.getElementById('alunos-container');
+                const novoInput = document.createElement('input');
+                novoInput.type = 'text';
+                novoInput.className = 'novoAluno';
+                novoInput.placeholder = 'Insira o nome completo do aluno...';
+                novoInput.maxLength = 60;
+                container.appendChild(novoInput);
+                novosAlunos++;
+            }
+        }
+
+        function removeAluno(aluno, nome) {
+            if (confirm(`Deseja remover ${nome}?`) == true) {
+                fetch('/removerAluno', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ aluno })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const messageDiv = document.getElementById('message');
+                        if (data.success) {
+                            messageDiv.style.color = 'rgb(0, 255, 0)';
+                            messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
+
+                        } else {
+                            messageDiv.style.color = 'red';
+                            messageDiv.innerHTML = `<p"><strong>${data.message}</strong></p>`;
+                        }
+                    })
+            }
+        }
+
+        document.getElementById('alterarIntegrantes').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email = Array.from(document.querySelectorAll('.novoAluno')).map(input => input.value);
+            const idProjeto = '<%= idProjeto %>'
+
+            fetch('/adicionarAluno', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, idProjeto })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById('message');
+                    if (data.success) {
+                        messageDiv.style.color = 'rgb(0, 255, 0)';
+                        messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
+
+                    } else {
+                        messageDiv.style.color = 'red';
+                        messageDiv.innerHTML = `<p"><strong>${data.message}</strong></p>`;
+                    }
+                })
+        })
+    </script>
+</body>
+
+</html>

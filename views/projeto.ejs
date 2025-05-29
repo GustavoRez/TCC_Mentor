@@ -191,6 +191,12 @@
             })
                 .then(response => response.json())
         }
+
+        function editar() {
+            const idProjeto = '<%= idProjeto %>';
+            window.location.href = `/editarProjeto?idProjeto=${idProjeto}`;
+        }
+
     </script>
 </body>
 
