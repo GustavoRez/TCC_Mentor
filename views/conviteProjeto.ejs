@@ -3,11 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.png" type="image/png">
     <title>Convite</title>
 </head>
 <body>
-    <h1><%= nomeP %></h1>
-    <h2><%= descP %></h2>
-    <h3><%= tipoP %></h3>
+    <h1>
+        <%= nomeP %>
+    </h1>
+    <h2>
+        <%= descP %>
+    </h2>
+    <h3>
+        <%= tipoP %>
+    </h3>
+
+    <p>Deseja entrar no projeto?</p>
+    <button onclick="cancelar()">Não</button>
+    <button onclick="entrar()">Sim</button>
+
+    <script>
+        function cancelar() {
+            if (confirm('Tem certeza que deseja rejeitar o convite de <%= nomeP %>?')) {
+                alert('Você será redirecionado para a página inicial!')
+                window.location.href = ('/');
+            }
+        }
+
+        function entrar() {
+            if (confirm('Tem certeza que deseja entrar no projeto <%= nomeP %>')) {
+                const email = '<%= emails %>';
+                const id = '<%= id %>'
+                fetch('/conviteProjeto', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, id })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            window.location.href = ('/');
+
+                        } else {
+                            alert(data.message);
+                            window.location.href = ('/');
+                        }
+                    })
+            }
+        }
+    </script>
 </body>
 </html>

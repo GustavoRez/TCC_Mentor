@@ -242,7 +242,7 @@ app.get('/home', function (req, res) {
 
     if (req.session.loggedin) {
         if (req.session.cargo === 'ALUN') {
-            sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE a.id_usuario = ?";
+            sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE id_projeto = (SELECT id_projeto FROM projeto_aluno WHERE id_aluno = ?)";
         } else {
             sql = "SELECT p.nm_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno WHERE o.id_usuario = ? GROUP BY p.id_projeto";
         }
@@ -254,7 +254,11 @@ app.get('/home', function (req, res) {
                 orientadores[i] = results[i].orientador;
                 alunos[i] = results[i].alunos;
             }
-            res.render('home', { nome, cargo, nomeProjetos, tipos, orientadores, alunos })
+            if (nomeProjetos[0] == null) {
+                console.log(nomeProjetos)
+                nomeProjetos = '';
+            }
+            res.render('home', { nome, cargo, nomeProjetos, tipos, orientadores, alunos });
         })
 
     } else
@@ -318,6 +322,87 @@ app.get('/editarProjeto', function (req, res) {
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
+app.post('/emailDelete', function (req, res) {
+    const idProjeto = req.body.idProjeto;
+    const nomeProjeto = req.body.nomeProjeto;
+
+    let emails = [];
+    const sql = 'SELECT email FROM usuario WHERE id_usuario IN (SELECT id_aluno FROM projeto_aluno WHERE id_projeto = ?)';
+
+    connection.query(sql, [idProjeto], function (err, results) {
+        if (err) throw err;
+        for (var i = 0; i < results.length; i++) {
+            emails[i] = results[i].email;
+        }
+        emails.forEach(email => {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: 'admtccmentor@gmail.com',
+                    pass: 'rsaq gcbr domf jbkv'
+                }
+            });
+
+            const mailOptions = {
+                from: 'TCC Mentor <admtccmentor@gmail.com>',
+                to: email,
+                subject: 'Exclusão de Projeto - TCC Mentor',
+                html: `
+                    <p>Um participante de seu projeto ${nomeProjeto} solicitou a exclusão.</p>
+                    <p>Clique no link abaixo para votar por <strong>excluir o projeto</strong>:</p>
+                    <a href="http://localhost:3000/deletarProjeto?&email=${email}&id=${idProjeto}">Excluir projeto</a>
+                    <p>Ou releve este e-mail caso vote pela permanência do mesmo.</p>
+                `
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    console.error(error);
+                    return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
+                } else {
+                    return res.json({ success: true, message: 'E-mail para votação enviado com sucesso!' });
+                }
+            });
+        });
+    })
+})
+
+app.get('/deletarProjeto', function (req, res) {
+    const { email, id } = req.query;
+
+    res.render('deletarProjeto', { email, id });
+});
+
+app.post('/deletarProjeto', function (req, res) {
+    const id = req.body.id;
+    const sql = 'UPDATE projeto SET voto_deletar = voto_deletar + 1 WHERE id_projeto = ?';
+
+    connection.query(sql, [id], function (err, results) {
+        if (err) {
+            console.log(err);
+            res.json({ success: false, message: 'Ocorreu um erro ao registrar seu voto! Tente novamente mais tarde.' });
+        } else {
+            connection.query('SELECT COUNT(id_aluno) contagem, voto_deletar FROM projeto_aluno NATURAL JOIN projeto WHERE id_projeto = ?', [id], function (erro, resultado) {
+                if (erro) throw erro;
+                if ((resultado[0].contagem / 2) >= resultado[0].voto_deletar) {
+                    connection.query('DELETE FROM projeto WHERE id_projeto = ?', [id], function (erro2, resultado2) {
+                        if (erro2) {
+                            console.log(erro2);
+                            res.json({ success: false, message: 'Erro ao deletar projeto. Contate o Suporte!' });
+                        } else {
+                            console.log(resultado2);
+                            res.json({ success: true, message: 'Seu projeto foi deletado com sucesso!' });
+                        }
+                    })
+                } else {
+                    console.log(resultado);
+                    res.json({ success: true, message: 'Seu voto foi computado. Caso mais da metade dos participantes concordem, seu projeto será excluido!' })
+                }
+            })
+        }
+    });
+});
+
 app.post('/adicionarAluno', function (req, res) {
     const emails = req.body.email;
     const idProjeto = req.body.idProjeto;
@@ -338,30 +423,32 @@ app.post('/adicionarAluno', function (req, res) {
                         const nome = results2[0].nm_usuario;
                         return res.json({ success: false, message: `Aluno ${nome} já possui um projeto em criado!` })
                     } else {
-                        const transporter = nodemailer.createTransport({
-                            service: 'gmail',
-                            auth: {
-                                user: 'admtccmentor@gmail.com',
-                                pass: 'rsaq gcbr domf jbkv'
-                            }
-                        });
-                        const mailOptions = {
-                            from: 'TCC Mentor <admtccmentor@gmail.com>',
-                            to: encontrados,
-                            subject: 'Convite Para Projeto - TCC Mentor',
-                            html: `
+                        encontrados.forEach(email => {
+                            const transporter = nodemailer.createTransport({
+                                service: 'gmail',
+                                auth: {
+                                    user: 'admtccmentor@gmail.com',
+                                    pass: 'rsaq gcbr domf jbkv'
+                                }
+                            });
+                            const mailOptions = {
+                                from: 'TCC Mentor <admtccmentor@gmail.com>',
+                                to: encontrados,
+                                subject: 'Convite Para Projeto - TCC Mentor',
+                                html: `
                     <p>${req.session.nome} te convidou para entrar em um projeto!</p>
                     <p>Clique no link abaixo para ver o convite:</p>
-                    <a href="http://localhost:3000/conviteProjeto?email=${encontrados}&id=${idProjeto}">Entre no meu grupo!</a>`
-                        };
+                    <a href="http://localhost:3000/conviteProjeto?email=${email}&id=${idProjeto}">Entre no meu grupo!</a>`
+                            };
 
-                        transporter.sendMail(mailOptions, function (error, info) {
-                            if (error) {
-                                console.error(error);
-                                return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
-                            } else {
-                                return res.json({ success: true, message: 'Solicitação enviada com sucesso!' });
-                            }
+                            transporter.sendMail(mailOptions, function (error, info) {
+                                if (error) {
+                                    console.error(error);
+                                    return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
+                                } else {
+                                    return res.json({ success: true, message: 'Solicitação enviada com sucesso!' });
+                                }
+                            });
                         });
                     }
                 });
@@ -370,17 +457,43 @@ app.post('/adicionarAluno', function (req, res) {
 });
 
 app.get('/conviteProjeto', function (req, res) {
-    const emails = req.query.email.split(',');
+    const emails = req.query.email;
     const id = req.query.id;
     const sql = 'SELECT nm_projeto, dc_projeto, tp_projeto FROM projeto WHERE id_projeto = ?';
 
-    connection.query(sql, [id], function(err, results){
+    connection.query(sql, [id], function (err, results) {
         const nomeP = results[0].nm_projeto;
         const descP = results[0].dc_projeto;
         const tipoP = results[0].tp_projeto;
 
-        res.render('conviteProjeto', {emails, id, nomeP, descP, tipoP});
+        res.render('conviteProjeto', { emails, id, nomeP, descP, tipoP });
     })
+});
+
+app.post('/conviteProjeto', function (req, res) {
+    const { email, id } = req.body;
+    const sql = 'INSERT INTO projeto_aluno (id_projeto, id_aluno) VALUES (?, (SELECT id_usuario FROM usuario WHERE email = ?))';
+
+    connection.query('SELECT * FROM projeto_aluno WHERE id_aluno = (SELECT id_usuario FROM usuario WHERE email = ?)', [email], function (erro, resultado) {
+        if (erro) {
+            console.log(erro);
+            res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' });
+        } else {
+            if (resultado.length !== 0) {
+                res.json({ success: false, message: 'Essa conta já possui um projeto ativo. Não foi possível entrar!' })
+            } else {
+                connection.query(sql, [id, email], function (err, results) {
+                    if (err) {
+                        console.log(err);
+                        res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' })
+                    } else {
+                        console.log(results);
+                        res.json({ success: true, message: 'Você entrou no projeto! Faça login para continuar.' })
+                    }
+                })
+            }
+        }
+    });
 });
 
 app.post('/removerAluno', function (req, res) {
