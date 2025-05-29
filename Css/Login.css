@@ -19,7 +19,22 @@ a {
 }
 
 .voltar{
+    display: flex;
     font-size: 2rem;
+    border: 0.01rem solid #4F46E5;
+    padding: 1rem;
+    width: 2.5rem;
+    height: 1rem;
+    margin-left: 1rem;
+    align-items: center;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.voltar:hover{
+    color: white;
+    background-color: #A259FF;
 }
 
 .verSenha{
@@ -27,7 +42,8 @@ a {
 }
 
 .esqueci {
-    color: #51b8e0;
+    display: flex;
+    color: #4F46E5;
     align-items: start;
 }
 
