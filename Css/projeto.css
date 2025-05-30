@@ -96,7 +96,7 @@ span{
 
 /* Janela de chat */
 #chat-window {
-    display: flex;
+    display: none;
     flex-direction: column;
     position: fixed;
     height: 20rem; 

@@ -384,7 +384,7 @@ app.post('/deletarProjeto', function (req, res) {
         } else {
             connection.query('SELECT COUNT(id_aluno) contagem, voto_deletar FROM projeto_aluno NATURAL JOIN projeto WHERE id_projeto = ?', [id], function (erro, resultado) {
                 if (erro) throw erro;
-                if ((resultado[0].contagem / 2) >= resultado[0].voto_deletar) {
+                if (((resultado[0].contagem / 2) >= resultado[0].voto_deletar) || resultado[0].contagem == 1) {
                     connection.query('DELETE FROM projeto WHERE id_projeto = ?', [id], function (erro2, resultado2) {
                         if (erro2) {
                             console.log(erro2);
