@@ -18,7 +18,7 @@ modelo = 'gemini-2.0-flash'
 chat_config = types.GenerateContentConfig(
     system_instruction = '''Voce é um assistente na criação de TCC para alunos, e apenas
     analisa se a resposta do professor foi uma resposta foi positiva, negativa ou neutra,
-    explicando o porquê sucintamente. Nao use marcadores de formatação.''',
+    explicando o porquê sucintamente e como resolver o problema, caso haja. Nao use marcadores de formatação.''',
 )
 chat = client.chats.create(model=modelo, config=chat_config)
 
