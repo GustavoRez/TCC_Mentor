@@ -1,0 +1,91 @@
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+a {
+    display: flex;
+    text-decoration: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 0.3rem;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+    color: #A259FF;
+    gap: 1rem;
+}
+
+.voltar{
+    display: flex;
+    font-size: 2rem;
+    border: 0.01rem solid #4F46E5;
+    padding: 1rem;
+    width: 2.5rem;
+    height: 1rem;
+    margin-left: 1rem;
+    align-items: center;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.voltar:hover{
+    color: white;
+    background-color: #A259FF;
+}
+
+.input-Remover {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-Remover input {
+    width: 100%;
+    padding-right: 2.5rem;
+}
+
+.login-container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 1rem rgba(0,0,0,0.1);
+    text-align: center;
+    width: 24rem;
+}
+
+.login-container h1 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.login-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.login-container input {
+    padding: 0.75rem;
+    border: 0.1rem solid #4e4eff;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+}
+
+.login-container button {
+    padding: 0.75rem;
+    background-color: #4e4eff;
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.login-container button:hover {
+    background-color: #3c3ccc;
+}

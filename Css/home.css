@@ -2,7 +2,7 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    background: white;
+    height: 100vh;
 }
 
 .navbar {
@@ -11,6 +11,7 @@ body {
     align-items: center;
     padding: 1rem;
     border: 0.1rem solid black;
+    background-color: white;
 }
 
 .user-info, .cargo {
@@ -44,6 +45,7 @@ body {
     justify-content: space-between;
     min-height: 30rem;
     position: relative;
+    background-color: white;
 }
 
 .projeto {

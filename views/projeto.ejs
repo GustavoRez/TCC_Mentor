@@ -14,23 +14,54 @@
 
 <body>
 
-    <header class="top-bar">
-        <a href="/home" class="voltar">
-            &#x2190; <!-- seta para esquerda -->
-        </a>
-    </header>
+    <div class="sidebar" id="sidebar">
+        <button class="toggle-btn" onclick="toggleSidebar()">➡</button>
+        <div class="sidebar-content">
+            <a href="/home" class="voltar">
+                <p>⬅</p>
+            </a>
+            <h1 class="titulo-projeto">
+                <%= projeto %>
+            </h1><br>
 
-    <section class="detalhes">
+            <h3>Descrição:<br></h3>
+            <%= desc %>
+
+            <h3>Tipo:</strong><br></h3>
+            <%= tipo %>
+
+            <h3>Integrantes:</strong><br></h3>
+            <%= aluno %>
+
+            <h3>Orientador(es):</strong><br></h3>
+            <%= orientador %>
+            <br>
+
+            <button onclick="editar()">Editar</button>
+            <button onclick="deletar()">Deletar projeto</button>
+        </div>
+    </div>
+    </div>
+
+    <!--
+    <section class="detalhes">        
+        <a href="/home" class="voltar">
+           <p>⬅</p>
+        </a>
         <div class="descricao">
+
             <h1 class="titulo-projeto">
                 <%= projeto %>
             </h1>
+
             <p><strong>Descrição:</strong><br>
                 <%= desc %>
             </p>
-            <p><strong>Tipo:</strong>
+
+            <p><strong>Tipo:</strong><br>
                 <%= tipo %>
             </p>
+
             <p><strong>Integrantes:</strong><br>
                 <%= aluno %>
             </p>
@@ -38,9 +69,9 @@
                 <%= orientador %>
             </p>
             <button onclick="editar()">Editar</button>
-            <button onclick="deletar()"><strong>Deletar projeto</strong></button>
+            <button onclick="deletar()">Deletar projeto</button>
         </div>
-    </section>
+    </section>-->
 
     <section id="chat">
         <% mensagens.forEach(msg=> { %>
@@ -89,6 +120,11 @@
     </div>
 
     <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
         const idProjeto = '<%=idProjeto %>';
 
         document.getElementById('formMensagem').addEventListener('submit', function (e) {
