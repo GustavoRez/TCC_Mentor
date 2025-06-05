@@ -58,7 +58,7 @@ app.post('/login', function (req, res) {
             req.session.cargo = results[0].cargo;
             return res.json({ success: true, message: 'Login concluído! Redirecionando...' });
         } else {
-            return res.json({ success: false, message: 'Nao achei oce' });
+            return res.json({ success: false, message: 'Login e/ou senha incorretos.' });
         }
     });
 });
