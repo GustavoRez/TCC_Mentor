@@ -519,7 +519,7 @@ app.get('/mensagens', (req, res) => {
 
     const sql = `
     SELECT mensagem, remetente, arquivo_pdf,
-           DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio
+           DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio_formatada
     FROM mensagem_chat
     WHERE id_projeto = ?
     ORDER BY data_envio ASC
