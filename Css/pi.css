@@ -2,6 +2,7 @@
 body {
   line-height: 1.6;
   padding: 2rem;
+  overflow: hidden;
 }
 
 
@@ -78,6 +79,7 @@ main {
   box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
   max-width: 50rem;
   margin: 1rem auto;
+  margin-top: 3rem;
 }
 
 section {
