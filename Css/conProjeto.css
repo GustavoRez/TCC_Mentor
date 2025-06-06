@@ -1,0 +1,39 @@
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #1f1f1f;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: #555;
+}
+
+p {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+button {
+    background-color: #4F46E5;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin-right: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #A259FF;
+}

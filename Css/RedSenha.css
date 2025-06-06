@@ -1,0 +1,72 @@
+.verSenha{
+    color: black;
+}
+
+.input-senha {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-senha input {
+    width: 100%;
+    padding-right: 2.5rem;
+}
+
+.input-senha .verSenha {
+    position: absolute;
+    right: 0.75rem;
+    cursor: pointer;
+}
+
+
+#alteraSenha {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 20rem;
+    margin: 3rem auto;
+    padding: 2rem;
+    border: 0.1rem solid #4F46E5;
+    border-radius: 1rem;
+    background-color: #f9f9ff;
+}
+
+#alteraSenha input[type="password"] {
+    padding: 0.75rem;
+    border: 0.05rem solid #4F46E5;
+    border-radius: 0.5rem;
+    background-color: #eef;
+    font-size: 1rem;
+}
+
+#alteraSenha .botao {
+    align-self: flex-end;
+    background-color: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+#alteraSenha button[type="submit"] {
+    padding: 0.75rem;
+    background-color: #4F46E5;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#alteraSenha button[type="submit"]:hover {
+    background-color: #A259FF;
+}
+
+#message,
+#confirmPass {
+    font-size: 0.875rem;
+    color: #dc2626;
+    text-align: center;
+}

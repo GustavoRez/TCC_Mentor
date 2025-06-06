@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/Global.css">
+    <link rel="stylesheet" href="/RedSenha.css">
     <title>Redefinir senha</title>
 </head>
 
@@ -12,9 +15,14 @@
         <input type="hidden" name="email" value="<%= email %>">
         <input type="hidden" name="token" value="<%= token %>">
 
-        <input type="password" id="novaSenha" placeholder="Digite sua nova senha..." minlength="8" required>
-        <input type="password" id="novaSenhaConfirm" placeholder="Confirme sua nova senha..." oninput="verificaSenha()" required>
-        <button class="botao" type="button" onclick="verSenha()">👁</button>
+        <div class="input-senha">
+            <input type="password" id="novaSenha" placeholder="Digite sua nova senha..." minlength="8" required>
+            <span class="verSenha" onclick="verSenha()">👁</span>
+        </div>
+        
+        <input type="password" id="novaSenhaConfirm" placeholder="Confirme sua nova senha..." oninput="verificaSenha()"
+            required>
+
         <button type="submit">Redefinir</button>
 
         <p id="message"></p>

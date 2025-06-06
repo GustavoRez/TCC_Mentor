@@ -9,28 +9,27 @@
     <link rel="stylesheet" href="/EditarProjeto.css">
     <title>Edite seu projeto!</title>
 </head>
-
 <body>
 
-<div class="login-container">
-    <a class="voltar" href="/">
+<div class="Projeto-container">
+    <a class="voltar" href="/home">
             <p>⬅</p>
     </a>
-        <h1>Login</h1>    
+        <h1>Editar Projeto</h1>    
     <form id="alterarIntegrantes" method="post">
 
-        <input type="text" value="<%= orientador %>" disabled>
+        <input class="integrantes" type="text" value="<%= orientador %>" disabled>
         <% alunos.forEach((aluno, index)=> { %>
-            <input type="text" name="aluno<%= index %>" value="<%= aluno %>" disabled>
+            <input class="integrantes" type="text" name="aluno<%= index %>" value="<%= aluno %>" disabled>
             <div id="alunos-container">
-                <input type="button" name="button<%= index %>" value="Remover"
+                <input class="botao" type="button" name="button<%= index %>" value="Remover"
                     onclick="removeAluno('<%= idAlunos[index] %>', '<%= aluno %>')">
             </div>
             <% }) %>
-                <input type="button" value="+" onclick="adicionarAluno()">
+                <input class="botao" type="button" value="+" onclick="adicionarAluno()">
                 <p id="message"></p>
 
-                <input type="submit">
+                <button type="submit">Editar</button>
     </form>
 </div>
 

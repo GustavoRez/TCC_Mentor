@@ -41,19 +41,19 @@
             <%for(var i=0; i < nomeProjetos.length; i++){%>
                 <% if (nomeProjetos[i] != null) { %>
                     <% let projectURL=[nomeProjetos[i].toLowerCase().replace(/\s+/g, '-' )]%>
-                        <a href="/projeto-<%=projectURL%>">
+                        <a class="nada" href="/projeto-<%=projectURL%>">
                             <div>
-                                <h2>Nome do projeto:
+                                <h2><strong>Nome do projeto:</strong>
                                     <%= nomeProjetos[i] %>
                                 </h2>
 
-                                <p>Tipo:
+                                <p><strong>Tipo:</strong>
                                     <%= tipos[i] %>
                                 </p>
-                                <p>Participantes:
+                                <p><strong>Participantes:</strong>
                                     <%= alunos[i] %>
                                 </p>
-                                <p>Orientadores:
+                                <p><strong>Orientadores:</strong>
                                     <%= orientadores[i] %>
                                 </p>
                             </div>

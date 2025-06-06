@@ -6,37 +6,6 @@ body {
     height: 100vh;
 }
 
-a {
-    display: flex;
-    text-decoration: none;
-    padding: 0.5rem 1.2rem;
-    border-radius: 0.3rem;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
-    color: #A259FF;
-    gap: 1rem;
-}
-
-.voltar{
-    display: flex;
-    font-size: 2rem;
-    border: 0.01rem solid #4F46E5;
-    padding: 1rem;
-    width: 2.5rem;
-    height: 1rem;
-    margin-left: 1rem;
-    align-items: center;
-    justify-content: center;
-    align-items: center;
-    padding: 1rem;
-}
-
-.voltar:hover{
-    color: white;
-    background-color: #A259FF;
-}
-
 .verSenha{
     color: black;
 }
