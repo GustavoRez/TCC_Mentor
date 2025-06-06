@@ -86,8 +86,8 @@
                 <div class="mensagem-junto">
                     <input type="text" name="mensagem" class="mensagem" id="msg_chat"
                         placeholder="Digite sua mensagem..." autocomplete="off">
-                    <button class="seta" type="submit">⭡</button>
-                </div>
+                        <button class="seta" type="submit">⭡</button>
+                    </div>
             </form>
         </div>
     </div>
@@ -137,7 +137,7 @@
                     data.forEach(msg => {
                         chat.innerHTML += `
                     <div class="mensagem">
-                        ${msg.mensagem ? `<h2>${msg.mensagem}  ${cargo === 'ALUN' ? `${msg.remetente === 'ORIE' ? `<button onclick="analisaMsg(this, '${msg.mensagem}')">Analisar</button>` : ''}` : ''}</h2>` : ''}
+                        ${msg.mensagem ? `<h2>${msg.mensagem}  ${cargo === 'ALUN' ? `${msg.remetente === 'ORIE' ? `<button class="analisar-btn" onclick="analisaMsg(this, '${msg.mensagem}')">Analisar</button>` : ''}` : ''}</h2>` : ''}
                         ${msg.arquivo_pdf ? `<a href="/uploads/${msg.arquivo_pdf}" target="_blank">📎 Ver PDF</a>` : ''}
                         <h4>${msg.data_envio_formatada}</h4>
                         <h4>${msg.remetente}</h4>
