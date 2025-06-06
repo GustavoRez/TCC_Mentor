@@ -14,6 +14,7 @@
 
 <body>
 
+    <!-- Descrição do TCC-->
     <div class="sidebar" id="sidebar">
         <button class="toggle-btn" onclick="toggleSidebar()">➡</button>
         <div class="sidebar-content">
@@ -43,61 +44,33 @@
     </div>
     </div>
 
-    <!--
-    <section class="detalhes">        
-        <a href="/home" class="voltar">
-           <p>⬅</p>
-        </a>
-        <div class="descricao">
-
-            <h1 class="titulo-projeto">
-                <%= projeto %>
-            </h1>
-
-            <p><strong>Descrição:</strong><br>
-                <%= desc %>
-            </p>
-
-            <p><strong>Tipo:</strong><br>
-                <%= tipo %>
-            </p>
-
-            <p><strong>Integrantes:</strong><br>
-                <%= aluno %>
-            </p>
-            <p><strong>Orientador:</strong><br>
-                <%= orientador %>
-            </p>
-            <button onclick="editar()">Editar</button>
-            <button onclick="deletar()">Deletar projeto</button>
-        </div>
-    </section>-->
-
-    <section id="chat">
-        <% mensagens.forEach(msg=> { %>
-            <div class="mensagem">
-                <h2>
-                    <%= msg.mensagem %>
-                        <% if (msg.remetente=='ORIE' ) { %>
-                            <button class="analisar-btn" onclick="this, '<%= msg.mensagem %>'">Analisar</button>
-                            <% } %>
-                </h2>
-                <h4>
-                    <%= msg.data_envio %>
-                </h4>
-                <h4>
-                    <%= msg.remetente %>
-                </h4>
+       <!-- Chat com orientador-->
+<section id="chat-container">
+    <div id="chat-mensagens">
+        <% mensagens.forEach(msg => { %>
+            <div class="mensagem <%= msg.remetente === 'ALUN' ? 'aluno' : 'orientador' %>">
+                <div class="conteudo-msg">
+                    <h2><%= msg.mensagem %></h2>
+                    <% if (msg.remetente === 'ORIE') { %>
+                        <button class="analisar-btn" onclick="this, '<%= msg.mensagem %>'">Analisar</button>
+                    <% } %>
+                </div>
+                <div class="info-msg">
+                    <h4><%= msg.data_envio %></h4>
+                    <h4><%= msg.remetente %></h4>
+                </div>
             </div>
-            <% }) %>
-    </section>
+        <% }) %>
+    </div>
 
+    <!-- PDF enviar-->
     <form id="formMensagem" enctype="multipart/form-data">
-        <input type="text" name="mensagem" id="msg" placeholder="Digite sua mensagem...">
-        <input type="file" id="pdf" name="arquivo_pdf" accept=".pdf">
+        <input type="file" id="pdf" name="arquivo_pdf" accept=".pdf" title="Enviar PDF" placeholder="Enviar PDF">
+        <input type="text" name="mensagem" id="msg" placeholder="Digite sua mensagem..." required>
         <button type="submit">Enviar</button>
     </form>
-
+</section>
+    <!-- Chat com a Tessy-->
     <div id="chat-button" onclick="toggleChat()">💬</div>
 
     <div id="chat-window">

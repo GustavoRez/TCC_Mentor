@@ -69,66 +69,105 @@ p{
  font-size: 1.5rem;
 }
 
-/* Descrição de TCC 
-.detalhes .descricao {
+/* Área de mensagens */
+#chat-container {
     border: 0.1rem solid #4F46E5;
-    padding: 1.5rem;
-    width: 20rem;
-    margin: 2rem 0 2rem 2rem; 
-    font-size: 1rem;
-    line-height: 1.6;
-    background-color: white;
-    border-radius: 0.5rem;
+    border-radius: 1rem;
+    max-width: 48rem;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    height: 30rem;
+    background-color: #F8F8FF;
+    overflow: hidden;
+}
+
+#chat-mensagens {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.detalhes .descricao button {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 0.5rem;
-    background-color: #4F46E5;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-*/
-
-/* Mensagens do chat */
-#chat .mensagem {
-    border: 0.1rem solid #4F46E5;
+/* Mensagens */
+.mensagem {
     padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 0.5rem;
+    border-radius: 0.6rem;
+    border: 0.1rem solid #4F46E5;
+    background-color: #fff;
 }
 
-span{
+.mensagem.aluno {
+    background-color: #EEF2FF;
+}
+
+.mensagem.orientador {
+    background-color: #EDE9FE;
+}
+
+.conteudo-msg {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.analisar-btn {
+    padding: 0.3rem 0.7rem;
+    background-color: #4F46E5;
+    color: #fff;
+    border: none;
+    border-radius: 0.3rem;
+    font-size: 0.875rem;
     cursor: pointer;
 }
 
-/* Formulário de envio */
-#formMensagem, #msgChat {
+.analisar-btn:hover {
+    background-color: #6D28D9;
+}
+
+.info-msg h4 {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.3rem;
+}
+
+/* Input + PDF + botão juntos */
+#formMensagem {
     display: flex;
-    flex-direction: column;
     gap: 0.5rem;
-    margin-top: 1.5rem;
+    padding: 1rem;
+    border-top: 0.1rem solid #4F46E5;
+    background-color: white;
 }
 
-#formMensagem input, #msgChat input {
+#formMensagem input[type="text"] {
+    flex: 1;
+    padding: 0.6rem;
     border: 0.1rem solid #4F46E5;
-    padding: 0.5rem;
-    border-radius: 0.3rem;
-    width: 100%;
+    border-radius: 0.4rem;
 }
 
-#formMensagem button, #msgChat button {
+#formMensagem input[type="file"] {
+    border: none;
+    cursor: pointer;
+    max-width: 9rem;
+}
+
+#formMensagem button {
     background-color: #4F46E5;
     color: white;
     border: none;
-    padding: 0.6rem 1rem;
-    border-radius: 0.3rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.4rem;
     cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#formMensagem button:hover {
+    background-color: #6D28D9;
 }
 
 /* Botão flutuante chat */
