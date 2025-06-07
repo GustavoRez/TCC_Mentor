@@ -99,6 +99,8 @@
     </div>
 
     <script>
+        const mensagensAnalisadas = new Set();
+        
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('collapsed');
@@ -133,17 +135,23 @@
         });
 
         function buscarMensagens() {
-            const cargo = '<%= cargo %>'
+            const cargo = '<%= cargo %>';
+
             fetch(`/mensagens?idProjeto=${idProjeto}`)
-            .then(res => res.json())
-            .then(data => {
+                .then(res => res.json())
+                .then(data => {
                     const chat = document.getElementById('chat-mensagens');
                     chat.innerHTML = '';
 
                     data.forEach(msg => {
+                        const podeAnalisar =
+                            cargo === 'ALUN' &&
+                            msg.remetente === 'ORIE' &&
+                            !mensagensAnalisadas.has(msg.mensagem);
+
                         chat.innerHTML += `
                     <div class="mensagem">
-                        ${msg.mensagem ? `<h2>${msg.mensagem}  ${cargo === 'ALUN' ? `${msg.remetente === 'ORIE' ? `<button class="analisar-btn" onclick="analisaMsg(this, '${msg.mensagem}')">Analisar</button>` : ''}` : ''}</h2>` : ''}
+                        ${msg.mensagem ? `<h2>${msg.mensagem} ${podeAnalisar ? `<button class="analisar-btn" onclick="analisaMsg(this, '${msg.mensagem}')">Analisar</button>` : ''}</h2>` : ''}
                         ${msg.arquivo_pdf ? `<a href="/uploads/${msg.arquivo_pdf}" target="_blank">📎 Ver PDF</a>` : ''}
                         <h4>${msg.data_envio_formatada}</h4>
                         <h4>${msg.nmRemetente ? msg.nmRemetente : 'IA'} - ${msg.remetente === 'ALUN' ? 'Aluno' : 'Orientador'}</h4>
@@ -199,6 +207,7 @@
         function analisaMsg(btn, msg) {
             btn.disabled = true;
             btn.textContent = 'Analisando...';
+            mensagensAnalisadas.add(msg); // marca como analisada
 
             fetch('/analisaMsg', {
                 method: 'POST',
@@ -208,6 +217,9 @@
                 body: JSON.stringify({ msg, idProjeto })
             })
                 .then(response => response.json())
+                .then(() => {
+                    buscarMensagens(); // recarrega o chat sem esse botão
+                });
         }
 
         function editar() {
