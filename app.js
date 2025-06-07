@@ -522,8 +522,8 @@ app.get('/mensagens', (req, res) => {
     const sql = `
     SELECT mensagem, nm_usuario nmRemetente, remetente, arquivo_pdf,
            DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio_formatada
-    FROM mensagem_chat JOIN usuario ON (id_remetente = id_usuario)
-    WHERE id_projeto = 1
+    FROM mensagem_chat LEFT JOIN usuario ON (id_remetente = id_usuario)
+    WHERE id_projeto = ?
     ORDER BY data_envio ASC
   `;
 
@@ -598,7 +598,7 @@ app.post('/analisaMsg', async function (req, res) {
     const mensagemIA = respostaIA.data.resposta;
 
     await new Promise((resolve, reject) => {
-        connection.query(sql, [idProjeto, 'IA', mensagemIA, null], (err, results) => {
+        connection.query(sql, [idProjeto, 'IA', mensagemIA], (err, results) => {
             if (err) return reject(err);
             console.log(results)
             resolve(results);
