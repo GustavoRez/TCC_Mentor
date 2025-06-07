@@ -278,7 +278,8 @@ app.get('/projeto-:projectURL', function (req, res) {
         const mensagem = [];
         const dtMensagem = [];
         const remetente = [];
-        let sql = "SELECT p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(DISTINCT a.nm_usuario SEPARATOR ', ') AS alunos, m.remetente, m.mensagem, DATE_FORMAT(m.data_envio, '%d/%m/%Y - %H:%i') AS data_envio FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno LEFT JOIN mensagem_chat m ON m.id_projeto = p.id_projeto WHERE url = ? GROUP BY p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario, m.remetente, m.mensagem, m.data_envio";
+        const nmRemetente = [];
+        let sql = "SELECT p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(DISTINCT a.nm_usuario SEPARATOR ', ') AS alunos, m.remetente, m.mensagem, u.nm_usuario AS nmRemetente, DATE_FORMAT(m.data_envio, '%d/%m/%Y - %H:%i') AS data_envio FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno LEFT JOIN mensagem_chat m ON m.id_projeto = p.id_projeto JOIN usuario u ON m.id_remetente = u.id_usuario WHERE url = ? GROUP BY p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario, m.remetente, m.mensagem, m.data_envio";
 
         connection.query(sql, URL, function (err, results) {
             if (err) throw err;
@@ -294,7 +295,8 @@ app.get('/projeto-:projectURL', function (req, res) {
                 .map(r => ({
                     mensagem: r.mensagem,
                     data_envio: r.data_envio,
-                    remetente: r.remetente
+                    remetente: r.remetente,
+                    nmRemetente: r.nmRemetente
                 }));
             res.render('projeto', { cargo, idProjeto, projeto, desc, tipo, orientador, aluno, mensagens })
         })
@@ -518,10 +520,10 @@ app.get('/mensagens', (req, res) => {
     }
 
     const sql = `
-    SELECT mensagem, remetente, arquivo_pdf,
+    SELECT mensagem, nm_usuario nmRemetente, remetente, arquivo_pdf,
            DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio_formatada
-    FROM mensagem_chat
-    WHERE id_projeto = ?
+    FROM mensagem_chat JOIN usuario ON (id_remetente = id_usuario)
+    WHERE id_projeto = 1
     ORDER BY data_envio ASC
   `;
 

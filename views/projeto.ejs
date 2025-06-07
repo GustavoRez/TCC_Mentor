@@ -28,48 +28,54 @@
             <h3>Descrição:<br></h3>
             <%= desc %>
 
-            <h3>Tipo:</strong><br></h3>
-            <%= tipo %>
+                <h3>Tipo:</strong><br></h3>
+                <%= tipo %>
 
-            <h3>Integrantes:</strong><br></h3>
-            <%= aluno %>
+                    <h3>Integrantes:</strong><br></h3>
+                    <%= aluno %>
 
-            <h3>Orientador(es):</strong><br></h3>
-            <%= orientador %>
-            <br>
+                        <h3>Orientador(es):</strong><br></h3>
+                        <%= orientador %>
+                            <br>
 
-            <button onclick="editar()">Editar</button>
-            <button onclick="deletar()">Deletar projeto</button>
+                            <button onclick="editar()">Editar</button>
+                            <button onclick="deletar()">Deletar projeto</button>
         </div>
     </div>
     </div>
 
-       <!-- Chat com orientador-->
-<section id="chat-container">
-    <div id="chat-mensagens">
-        <% mensagens.forEach(msg => { %>
-            <div class="mensagem <%= msg.remetente === 'ALUN' ? 'aluno' : 'orientador' %>">
-                <div class="conteudo-msg">
-                    <h2><%= msg.mensagem %></h2>
-                    <% if (msg.remetente === 'ORIE') { %>
-                        <button class="analisar-btn" onclick="this, '<%= msg.mensagem %>'">Analisar</button>
-                    <% } %>
+    <!-- Chat com orientador-->
+    <section id="chat-container">
+        <div id="chat-mensagens">
+            <% mensagens.forEach(msg=> { %>
+                <div class="mensagem <%= msg.remetente === 'ALUN' ? 'aluno' : 'orientador' %>">
+                    <div class="conteudo-msg">
+                        <h2>
+                            <%= msg.mensagem %>
+                        </h2>
+                        <% if (msg.remetente==='ORIE' ) { %>
+                            <button class="analisar-btn" onclick="this, '<%= msg.mensagem %>'">Analisar</button>
+                            <% } %>
+                    </div>
+                    <div class="info-msg">
+                        <h4>
+                            <%= msg.data_envio_formatada %>
+                        </h4>
+                        <h4>
+                            <%= msg.nmRemetente %> - <% if(msg.remetente=='ALUN' ){%> Aluno <%} else{%> Orientador <%}%>
+                        </h4>
+                    </div>
                 </div>
-                <div class="info-msg">
-                    <h4><%= msg.data_envio_formatada %></h4>
-                    <h4><%= msg.remetente %></h4>
-                </div>
-            </div>
-        <% }) %>
-    </div>
+                <% }) %>
+        </div>
 
-    <!-- PDF enviar-->
-    <form id="formMensagem" enctype="multipart/form-data">
-        <input type="file" id="pdf" name="arquivo_pdf" accept=".pdf" title="Enviar PDF" placeholder="Enviar PDF">
-        <input type="text" name="mensagem" id="msg" placeholder="Digite sua mensagem..." required>
-        <button type="submit">Enviar</button>
-    </form>
-</section>
+        <!-- PDF enviar-->
+        <form id="formMensagem" enctype="multipart/form-data">
+            <input type="file" id="pdf" name="arquivo_pdf" accept=".pdf" title="Enviar PDF" placeholder="Enviar PDF">
+            <input type="text" name="mensagem" id="msg" placeholder="Digite sua mensagem..." required>
+            <button type="submit">Enviar</button>
+        </form>
+    </section>
     <!-- Chat com a Tessy-->
     <div id="chat-button" onclick="toggleChat()">💬</div>
 
@@ -86,8 +92,8 @@
                 <div class="mensagem-junto">
                     <input type="text" name="mensagem" class="mensagem" id="msg_chat"
                         placeholder="Digite sua mensagem..." autocomplete="off">
-                        <button class="seta" type="submit">⭡</button>
-                    </div>
+                    <button class="seta" type="submit">⭡</button>
+                </div>
             </form>
         </div>
     </div>
@@ -129,8 +135,8 @@
         function buscarMensagens() {
             const cargo = '<%= cargo %>'
             fetch(`/mensagens?idProjeto=${idProjeto}`)
-                .then(res => res.json())
-                .then(data => {
+            .then(res => res.json())
+            .then(data => {
                     const chat = document.getElementById('chat-mensagens');
                     chat.innerHTML = '';
 
@@ -140,7 +146,7 @@
                         ${msg.mensagem ? `<h2>${msg.mensagem}  ${cargo === 'ALUN' ? `${msg.remetente === 'ORIE' ? `<button class="analisar-btn" onclick="analisaMsg(this, '${msg.mensagem}')">Analisar</button>` : ''}` : ''}</h2>` : ''}
                         ${msg.arquivo_pdf ? `<a href="/uploads/${msg.arquivo_pdf}" target="_blank">📎 Ver PDF</a>` : ''}
                         <h4>${msg.data_envio_formatada}</h4>
-                        <h4>${msg.remetente}</h4>
+                        <h4>${msg.nmRemetente} - ${msg.remetente === 'ALUN' ? 'Aluno' : 'Orientador'}</h4>
                     </div>
                 `;
                     });
