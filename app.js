@@ -242,7 +242,7 @@ app.get('/home', function (req, res) {
 
     if (req.session.loggedin) {
         if (req.session.cargo === 'ALUN') {
-            sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE id_projeto = (SELECT id_projeto FROM projeto_aluno WHERE id_aluno = ?)";
+            sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE id_projeto = (SELECT id_projeto FROM projeto_aluno WHERE id_aluno = ?) GROUP BY nm_usuario";
         } else {
             sql = "SELECT p.nm_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno WHERE o.id_usuario = ? GROUP BY p.id_projeto";
         }
