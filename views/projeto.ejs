@@ -16,7 +16,7 @@
 
     <!-- Descrição do TCC-->
     <div class="sidebar" id="sidebar">
-        <button class="toggle-btn" onclick="toggleSidebar()">➡</button>
+        <button class="toggle-btn" onclick="toggleSidebar(this)">➡</button>
         <div class="sidebar-content">
             <a href="/home" class="voltar">
                 <p>⬅</p>
@@ -76,6 +76,7 @@
             <button type="submit">Enviar</button>
         </form>
     </section>
+
     <!-- Chat com a Tessy-->
     <div id="chat-button" onclick="toggleChat()">💬</div>
 
@@ -100,10 +101,18 @@
 
     <script>
         const mensagensAnalisadas = new Set();
-        
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
+
+        //Barra Lateral
+        function toggleSidebar(button) {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('fechada');
+
+            // Altera a seta conforme o estado da barra
+            if (sidebar.classList.contains('fechada')) {
+                button.textContent = '⬅'; // Barra recolhida, mostra seta para esquerda
+            } else {
+                button.textContent = '➡'; // Barra expandida, mostra seta para direita
+            }
         }
 
         const idProjeto = '<%=idProjeto %>';

@@ -2,7 +2,6 @@
 body {
   line-height: 1.6;
   padding: 2rem;
-  overflow: hidden;
 }
 
 
@@ -95,12 +94,6 @@ h3 {
   font-size: 1.4rem;
   margin-bottom: 0.75rem;
 }
-
-ul {
-  list-style: disc inside;
-  padding-left: 1rem;
-}
-
 p {
   margin-bottom: 1rem;
 }
@@ -115,4 +108,11 @@ p {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
   }
+}
+
+/* Se for maior que esse tanto esconde a barra lateral */
+@media screen and (min-width: 1440px) {
+    body {
+        overflow: hidden;
+    }
 }

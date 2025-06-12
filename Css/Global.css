@@ -40,3 +40,19 @@ a {
     color: white;
     background-color: #A259FF;
 }
+
+.Generico-container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 1rem rgba(0,0,0,0.1);
+    text-align: center;
+    width: 24rem;
+}
+
+.generico{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
