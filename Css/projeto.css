@@ -103,7 +103,7 @@ p{
 
 /* Mensagens */
 .mensagem {
-    padding: 1rem;
+    padding: 2rem;
     border-radius: 0.6rem;
     border: 0.1rem solid #4F46E5;
     background-color: #fff;
@@ -186,7 +186,7 @@ p{
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: #0084ff;
+    background-color: #4F46E5;
     color: white;
     border-radius: 50%;
     width: 50px;
@@ -259,7 +259,7 @@ p{
 }
 
 .mensagem-junto .seta {
-    background-color: #000000 !important; /* cor roxa destaque */
+    background-color: #000000 !important;
     border: none;
     border-radius: 15%;
     width: 10%;

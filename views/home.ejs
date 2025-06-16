@@ -36,43 +36,43 @@
     <!-- Inicio projetos -->
     <main class="content">
 
-        <% if(nomeProjetos[0] != null){ %>
-        <section class="projeto">
+        <% if(nomeProjetos[0] !=null){ %>
             <%for(var i=0; i < nomeProjetos.length; i++){%>
-                <% if (nomeProjetos[i] != null) { %>
+                <% if (nomeProjetos[i] !=null) { %>
                     <% let projectURL=[nomeProjetos[i].toLowerCase().replace(/\s+/g, '-' )]%>
-                        <a class="nada" href="/projeto-<%=projectURL%>">
-                            <div>
-                                <h2><strong>Nome do projeto:</strong>
-                                    <%= nomeProjetos[i] %>
-                                </h2>
+                        <section class="projeto">
+                            <a class="nada" href="/projeto-<%=projectURL%>">
+                                <div>
+                                    <h2><strong>Nome do projeto:</strong>
+                                        <%= nomeProjetos[i] %>
+                                    </h2>
 
-                                <p><strong>Tipo:</strong>
-                                    <%= tipos[i] %>
-                                </p>
-                                <p><strong>Participantes:</strong>
-                                    <%= alunos[i] %>
-                                </p>
-                                <p><strong>Orientadores:</strong>
-                                    <%= orientadores[i] %>
-                                </p>
-                            </div>
-                        </a>
+                                    <p><strong>Tipo:</strong>
+                                        <%= tipos[i] %>
+                                    </p>
+                                    <p><strong>Participantes:</strong>
+                                        <%= alunos[i] %>
+                                    </p>
+                                    <p><strong>Orientadores:</strong>
+                                        <%= orientadores[i] %>
+                                    </p>
+                                </div>
+                            </a>
+                        </section>
                         <%}%>
-                <% } %>
-        </section>
-        <% } %>
 
-        <!-- Botoes -->
-        <div class="botoes">
-            <div>
-                <%if(!( cargo==='ALUN' && nomeProjetos.length >= 1 )){%>
-                    <a href="adicionarProjeto">
-                        <button class="add">+</button>
-                    </a>
-                    <%}%>
-            </div>
-        </div>
+                            <% } %>
+                                <% } %>
+                                    <!--  Botoes -->
+                                    <div class="botoes">
+                                        <div>
+                                            <%if(!( cargo==='ALUN' && nomeProjetos.length>= 1 )){%>
+                                                <a href="adicionarProjeto">
+                                                    <button class="add">+</button>
+                                                </a>
+                                                <%}%>
+                                        </div>
+                                    </div>
     </main>
 
 </body>

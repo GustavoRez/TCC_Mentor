@@ -77,6 +77,7 @@
         </form>
     </section>
 
+    
     <!-- Chat com a Tessy-->
     <div id="chat-button" onclick="toggleChat()">💬</div>
 
@@ -105,13 +106,13 @@
         //Barra Lateral
         function toggleSidebar(button) {
             const sidebar = document.querySelector('.sidebar');
-            sidebar.classList.toggle('fechada');
+            sidebar.classList.toggle('collapsed');
 
             // Altera a seta conforme o estado da barra
-            if (sidebar.classList.contains('fechada')) {
-                button.textContent = '⬅'; // Barra recolhida, mostra seta para esquerda
+            if (sidebar.classList.contains('collapsed')) {
+                button.textContent = '➡'; // Barra recolhida, mostra seta para esquerda
             } else {
-                button.textContent = '➡'; // Barra expandida, mostra seta para direita
+                button.textContent = '⬅'; // Barra expandida, mostra seta para direita
             }
         }
 

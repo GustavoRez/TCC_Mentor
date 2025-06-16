@@ -50,9 +50,10 @@ body {
 
 .projeto {
     border: 0.1rem solid black;
-    border-radius: 0.5rem;
+    border-radius: 1rem;
     padding: 1rem;
     max-width: 40rem;
+    margin-bottom: 1.5rem;
 }
 
 .projeto h2 {
