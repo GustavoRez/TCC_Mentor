@@ -5,36 +5,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/Global.css">
+    <link rel="stylesheet" href="/editarUsuario.css">
     <title>Editar Usuário</title>
 </head>
 
 <body>
-    <form id="formEditarUsuario">
-        <input type="text" placeholder="<%=nome%>" disabled>
-        <input type="text" id="nome" placeholder="Digite algo..." maxlength="60" required>
-        <button type="button" id="nmButton" onclick="esconderNome()">Esconder</button>
-        <br>
-        <input type="email" placeholder="<%=email%>" disabled>
-        <input type="email" id="email" placeholder="Digite algo..." maxlength="70" required>
-        <button type="button" id="emButton" onclick="esconderEmail()">Esconder</button>
+    <div class="container">
+        <a class="voltar" href="/home">
+            <p>⬅</p>
+        </a>
+        <h1>Editar Perfil</h1>
+        <form id="formEditarUsuario">
+            <div class="form-group">
+                <input type="text" placeholder="<%= nome %>" disabled>
+                <input type="text" id="nome" placeholder="Digite algo..." maxlength="60" required>
+                <button onclick="esconderNome()" type="button" id="nmButton">Esconder</button>
+            </div>
 
-        <button type="submit">Enviar</button>
-    </form>
+            <div class="form-group">
+                <input type="email" placeholder="<%= email %>" disabled>
+                <input type="email" id="email" placeholder="Digite algo..." maxlength="70" required>
+                <button onclick="esconderEmail()" type="button" id="emButton">Esconder</button>
+            </div>
 
-    <form id="formEditarSenha">
-        <label for="senhaAntiga">Senha Antiga: </label>
-        <input type="text" id="senhaAntiga" required>
+            <div class="form-group">
+                <button type="submit">Enviar</button>
+            </div>
+        </form>
 
-        <label for="senhaAtual">Nova Senha: </label>
-        <input type="text" id="senhaAtual" minlength="8" required>
-        <label for="confirmSenha">Confirme sua nova senha: </label>
-        <input type="text" id="confirmSenha" required>
-        <p id="messageError"></p>
+        <form id="formEditarSenha">
+            <div class="form-group">
+                <label for="senhaAntiga">Senha Antiga:</label>
+                <input type="password" id="senhaAntiga" required>
+            </div>
 
-        <button type="submit">Enviar</button>
-    </form>
+            <div class="form-group">
+                <label for="senhaAtual">Nova Senha:</label>
+                <input type="password" id="senhaAtual" minlength="8" required>
+            </div>
 
-    <button type="submit" id="deletarConta"><strong>Deletar Conta</strong></button>
+            <div class="form-group">
+                <label for="confirmSenha">Confirme sua nova senha:</label>
+                <input type="password" id="confirmSenha" required>
+            </div>
+
+            <p id="messageError" class="message"></p>
+
+            <div class="form-group">
+                <button type="button" id="deletarConta" class="danger"><strong>Deletar Conta</strong></button>
+                <button type="submit">Enviar</button>
+            </div>
+        </form>
+    </div>
 
     <script>
         function esconderNome() {
@@ -120,11 +143,12 @@
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        alert(data.mensagem);
+                        msg.innerHTML = (data.mensagem);
                         window.location.href = ('/home');
                     } else {
                         const erro = await response.json();
-                        alert(erro.mensagem || 'Erro ao enviar.')
+                        msg.innerHTML = (erro.mensagem || 'Erro ao enviar.');
+
                     }
                 } catch (err) {
                     console.error(err);

@@ -16,7 +16,7 @@
 
     <!-- Descrição do TCC-->
     <div class="sidebar" id="sidebar">
-        <button class="toggle-btn" onclick="toggleSidebar(this)">➡</button>
+        <button class="toggle-btn" onclick="toggleSidebar(this)">⬅</button>
         <div class="sidebar-content">
             <a href="/home" class="voltar">
                 <p>⬅</p>
@@ -39,7 +39,7 @@
                             <br>
 
                             <button onclick="editar()">Editar</button>
-                            <button onclick="deletar()">Deletar projeto</button>
+                            <button id="deleteButton" onclick="deletar()">Deletar projeto</button>
         </div>
     </div>
     </div>
@@ -77,7 +77,7 @@
         </form>
     </section>
 
-    
+
     <!-- Chat com a Tessy-->
     <div id="chat-button" onclick="toggleChat()">💬</div>
 
@@ -102,6 +102,7 @@
 
     <script>
         const mensagensAnalisadas = new Set();
+        let primeiraCarga = true;
 
         //Barra Lateral
         function toggleSidebar(button) {
@@ -168,6 +169,10 @@
                     </div>
                 `;
                     });
+                    if (primeiraCarga) {
+                        chat.scrollTop = chat.scrollHeight;
+                        primeiraCarga = false;
+                    }
                 });
         }
 

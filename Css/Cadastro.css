@@ -1,12 +1,12 @@
-body {
+html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 110vh;
+    height: 100%;
+    overflow-y: hidden;
 }
 
-
-.verSenha{
+.verSenha {
     color: black;
 }
 
@@ -34,12 +34,12 @@ body {
 }
 
 .Cadastro-container {
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.8);
     padding: 2rem;
     border-radius: 0.5rem;
-    box-shadow: 0 0 1rem rgba(0,0,0,0.1);
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
     text-align: center;
-    width: 24rem;
+    width: 30rem;
 }
 
 .Cadastro-container h1 {
@@ -54,6 +54,13 @@ body {
 }
 
 .Cadastro-container input {
+    padding: 0.75rem;
+    border: 0.1rem solid #4e4eff;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+}
+
+.Cadastro-container select {
     padding: 0.75rem;
     border: 0.1rem solid #4e4eff;
     border-radius: 0.25rem;

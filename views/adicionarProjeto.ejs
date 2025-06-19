@@ -37,13 +37,6 @@
             <label for="orient">Orientador:</label>
             <input type="text" id="orient" placeholder="Nome completo do orientador..." maxlength="60"
                 required>
-
-            <button type="button" id="toggleCoorientador" onclick="adicionarCoorientador()">+</button>
-            
-            <div id="coorient" hidden>
-                <label for="coor">Coorientador:</label>
-                <input type="text" id="coor" placeholder="Nome completo do coorientador..." maxlength="60">
-            </div>
             
             <%} else { %>
                 <div id="alunos-container">
@@ -58,19 +51,6 @@
 </div>
 
     <script>
-        function adicionarCoorientador() {
-            const coorientador = document.getElementById('coorient');
-            const botao = document.getElementById('toggleCoorientador');
-
-            if (coorientador.hasAttribute('hidden')) {
-                coorientador.removeAttribute('hidden');
-                botao.textContent = '-';
-            } else {
-                coorientador.setAttribute('hidden', true);
-                botao.textContent = '+';
-            }
-        }
-
         function adicionarAlunos(input) {
             const container = document.getElementById('alunos-container');
             const tipo = document.getElementById('tipo').value;
