@@ -29,11 +29,12 @@
             </select>
 
             <div class="input-senha">
-                <input type="password" id="senha" placeholder="Insira sua senha..." required autocomplete="off" minlength="8" oninput="verificaSenha()">
-                
+                <input type="password" id="senha" placeholder="Insira sua senha..." required autocomplete="off"
+                    minlength="8" oninput="verificaSenha()">
+
                 <span class="verSenha" onclick="verSenha()">👁</span>
             </div>
-            
+
             <input type="password" id="confirm" placeholder="Confirme sua senha..." required autocomplete="off"
                 oninput="verificaSenha()">
             <p id="confirmPass"></p>
@@ -79,29 +80,35 @@
             const nome = document.getElementById('nome').value;
             const cargo = document.getElementById('cargo').value;
             const senha = document.getElementById('senha').value;
+            const confirm = document.getElementById('confirm').value;
 
-            fetch('/cadastro', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, nome, cargo, senha })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    const messageDiv = document.getElementById('message');
-                    if (data.success) {
-                        messageDiv.style.color = 'rgb(0, 255, 0)';
-                        messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
-                        setTimeout(() => {
-                            window.location.href = ('/login');
-                        }, 3000)
-                    } else {
-                        messageDiv.style.color = 'red';
-                        messageDiv.innerHTML = `<p"><strong>${data.message}</strong></p>`;
-                    }
+            if (senha !== confirm) {
+                alert('As senhas não coincidem!')
+            } else {
+
+                fetch('/cadastro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, nome, cargo, senha })
                 })
-                .catch(error => console.error('Erro ao salvar:', error));
+                    .then(response => response.json())
+                    .then(data => {
+                        const messageDiv = document.getElementById('message');
+                        if (data.success) {
+                            messageDiv.style.color = 'rgb(0, 255, 0)';
+                            messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
+                            setTimeout(() => {
+                                window.location.href = ('/login');
+                            }, 3000)
+                        } else {
+                            messageDiv.style.color = 'red';
+                            messageDiv.innerHTML = `<p"><strong>${data.message}</strong></p>`;
+                        }
+                    })
+                    .catch(error => console.error('Erro ao salvar:', error));
+            }
         })
     </script>
 </body>

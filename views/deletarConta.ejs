@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <title>Deletar conta</title>
+</head>
+
+<body>
+    <input type="email" id="email" placeholder="Insira seu email para continuar">
+    <button id="botaoEnviar">Enviar</button>
+    <p id="message"></p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const botaoEnviar = document.getElementById('botaoEnviar');
+            const message = document.getElementById('message');
+            const id = '<%= id %>';
+            const emailOriginal = '<%= email %>';
+
+            botaoEnviar.addEventListener('click', async () => {
+                const emailDigitado = document.getElementById('email').value;
+
+                if (emailDigitado === emailOriginal) {
+                    message.innerHTML = ''
+                    try {
+                        const res = await fetch('/deletarConta', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id })
+                        });
+
+                        const data = await res.json();
+
+                        if (data.success) {
+                            alert(data.mensagem);
+                        } else {
+                            alert(data.mensagem);
+                        }
+
+                    } catch (err) {
+                        console.error('Erro na requisição:', err);
+                        message.innerHTML = '<p>Erro de conexão com o servidor.</p>';
+                    }
+
+                } else {
+                    message.innerHTML = '<p>Seu email está incorreto!</p>';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

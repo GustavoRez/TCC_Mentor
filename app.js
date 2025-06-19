@@ -96,7 +96,7 @@ app.post('/esqueciSenha', function (req, res) {
                 html: `
                     <p>Você solicitou a recuperação de senha.</p>
                     <p>Clique no link abaixo para redefinir sua senha:</p>
-                    <a href="http://localhost:3000/redefinirSenha?token=${token}&email=${email}">Redefinir Senha</a>
+                    <a href="http://localhost:3006/redefinirSenha?token=${token}&email=${email}">Redefinir Senha</a>
                     <p>Este link é válido por 1 hora.</p>
                 `
             };
@@ -184,7 +184,7 @@ app.post('/cadastro', function (req, res) {
                         html: `
                             <p>Bem-vindo! 🎉</p>
                             <p>Para concluir seu cadastro, confirme seu e-mail clicando no link abaixo:</p>
-                            <a href="http://localhost:3000/confirmarEmail?token=${token}&email=${email}">Confirmar E-mail</a>
+                            <a href="http://localhost:3006/confirmarEmail?token=${token}&email=${email}">Confirmar E-mail</a>
                             `
                     };
 
@@ -237,7 +237,6 @@ app.get('/home', function (req, res) {
     let tipos = [];
     let orientadores = [];
     let alunos = [];
-    let orientador = false;
     let sql;
 
     if (req.session.loggedin) {
@@ -255,10 +254,9 @@ app.get('/home', function (req, res) {
                 alunos[i] = results[i].alunos;
             }
             if (nomeProjetos[0] == null) {
-                console.log(nomeProjetos)
                 nomeProjetos = '';
             }
-            res.render('home', { nome, cargo, nomeProjetos, tipos, orientadores, alunos });
+            res.render('home', { id, nome, cargo, nomeProjetos, tipos, orientadores, alunos });
         })
 
     } else
@@ -324,202 +322,360 @@ app.get('/editarProjeto', function (req, res) {
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
-app.post('/emailDelete', function (req, res) {
-    const idProjeto = req.body.idProjeto;
-    const nomeProjeto = req.body.nomeProjeto;
+app.get('/editarUsuario', function (req, res) {
+    if (req.session.loggedin) {
+        const idUser = req.session.idUser;
+        const sql = 'SELECT nm_usuario nome, email, senha FROM usuario WHERE id_usuario = ?';
 
-    let emails = [];
-    const sql = 'SELECT email FROM usuario WHERE id_usuario IN (SELECT id_aluno FROM projeto_aluno WHERE id_projeto = ?)';
+        connection.query(sql, [idUser], function (err, results) {
+            const nome = results[0].nome;
+            const email = results[0].email;
+            const senha = results[0].senha;
 
-    connection.query(sql, [idProjeto], function (err, results) {
-        if (err) throw err;
-        for (var i = 0; i < results.length; i++) {
-            emails[i] = results[i].email;
+            res.render('editarUsuario', { nome, email, senha });
+        })
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
+
+app.post('/editarUsuario', function (req, res) {
+    if (req.session.loggedin) {
+        const { nome, email } = req.body;
+        let variaveis = [];
+
+        if (!nome && !email) {
+            return res.status(400).json({ mensagem: 'Não foi feita nenhuma alteração.' });
         }
-        emails.forEach(email => {
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: 'admtccmentor@gmail.com',
-                    pass: 'rsaq gcbr domf jbkv'
-                }
-            });
+        let sql = 'UPDATE usuario SET ';
+        if (nome) { sql += 'nm_usuario = ? '; variaveis.push(nome); }
+        if (email) { sql += 'email = ? '; variaveis.push(email) }
+        sql += 'WHERE id_usuario = ?';
+        variaveis.push(req.session.idUser)
 
-            const mailOptions = {
-                from: 'TCC Mentor <admtccmentor@gmail.com>',
-                to: email,
-                subject: 'Exclusão de Projeto - TCC Mentor',
-                html: `
+        connection.query(sql, variaveis, function (err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(400).json({ mensagem: 'Ocorreu um erro ao atualizar esse perfil! Tente novamente mais tarde.' });
+            } else {
+                console.log(results);
+                return res.status(200).json({ mensagem: 'Perfil atualizado com sucesso. Faça login novamente para visualizar!' });
+            }
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
+
+app.post('/editarSenha', function (req, res) {
+    if (req.session.loggedin) {
+        const { senhaAntiga, senhaAtual } = req.body;
+        const id = req.session.idUser;
+
+        let sql = 'SELECT * FROM usuario WHERE id_usuario = ? AND senha = MD5(?)';
+
+        connection.query(sql, [id, senhaAntiga], function (err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(400).json({ mensagem: 'Ocorreu uma erro interno! Tente novamente mais tarde.' })
+            }
+            else {
+                if (!results.length) {
+                    return res.status(400).json({ mensagem: 'Sua senha antiga está errada! Tente novamente.' })
+                }
+                connection.query('UPDATE usuario SET senha = MD5(?) WHERE id_usuario = ?', [senhaAtual, id], function (erro, resultado) {
+                    if (erro) {
+                        console.log(erro);
+                        return res.status(400).json({ mensagem: 'Ocorreu um erro ao tentar alterar sua senha! Tente novamente mais tarde.' })
+                    } else {
+                        console.log(resultado);
+                        return res.status(200).json({ mensagem: 'Senha alterada com sucesso! Você voltará a página inicial.' });
+                    }
+                });
+            }
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
+
+app.post('/emailDeletarUsuario', function (req, res) {
+    const idUser = req.session.idUser;
+    const { email } = req.body;
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'admtccmentor@gmail.com',
+            pass: 'rsaq gcbr domf jbkv'
+        }
+    });
+
+    const mailOptions = {
+        from: 'TCC Mentor <admtccmentor@gmail.com>',
+        to: email,
+        subject: 'Exclusão de Conta - TCC Mentor',
+        html: `
+            <p>Você solicitou a exclusão de sua conta.</p>
+            <p>Clique no link abaixo para <strong>apagar ela</strong>:</p>
+            <a href="http://localhost:3006/deletarConta?&email=${email}&id=${idUser}">Excluir Conta</a>
+            <p>Caso não reconheça essa solicitação, considere alterar sua senha.</p>
+            <p>Uma exclusão de conta é uma ação irreversível!</p>
+            `
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.error(error);
+            return res.status(400).json({ mensagem: 'Ocorreu um erro ao enviar o email! Tente novamente mais tarde.' });
+        } else {
+            return res.status(200).json({ mensagem: 'E-mail para exclusão de conta enviado com sucesso!' });
+        }
+    });
+});
+
+app.get('/deletarConta', function (req, res) {
+    if (req.session.loggedin) {
+        const { email, id } = req.query;
+
+        res.render('deletarConta', { email, id })
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
+
+app.post('/deletarConta', function (req, res) {
+    if (req.session.loggedin) {
+        const { id } = req.body;
+        const sql = 'DELETE FROM usuario WHERE id_usuario = ?';
+
+        connection.query(sql, id, function (err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(400).json({ mensagem: 'Ocorreu um erro ao tentar excluir sua conta! Tente novamente mais tarde.' })
+            } else {
+                console.log(results);
+                return res.status(200).json({ mensagem: 'Conta removida com sucesso. Você pode fechar essa página.' })
+            }
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
+
+app.post('/emailDelete', function (req, res) {
+    if (req.session.loggedin) {
+        const idProjeto = req.body.idProjeto;
+        const nomeProjeto = req.body.nomeProjeto;
+
+        let emails = [];
+        const sql = 'SELECT email FROM usuario WHERE id_usuario IN (SELECT id_aluno FROM projeto_aluno WHERE id_projeto = ?)';
+
+        connection.query(sql, [idProjeto], function (err, results) {
+            if (err) throw err;
+            for (var i = 0; i < results.length; i++) {
+                emails[i] = results[i].email;
+            }
+            emails.forEach(email => {
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: 'admtccmentor@gmail.com',
+                        pass: 'rsaq gcbr domf jbkv'
+                    }
+                });
+
+                const mailOptions = {
+                    from: 'TCC Mentor <admtccmentor@gmail.com>',
+                    to: email,
+                    subject: 'Exclusão de Projeto - TCC Mentor',
+                    html: `
                     <p>Um participante de seu projeto ${nomeProjeto} solicitou a exclusão.</p>
                     <p>Clique no link abaixo para votar por <strong>excluir o projeto</strong>:</p>
-                    <a href="http://localhost:3000/deletarProjeto?&email=${email}&id=${idProjeto}">Excluir projeto</a>
+                    <a href="http://localhost:3006/deletarProjeto?&email=${email}&id=${idProjeto}">Excluir projeto</a>
                     <p>Ou releve este e-mail caso vote pela permanência do mesmo.</p>
                 `
-            };
+                };
 
-            transporter.sendMail(mailOptions, function (error, info) {
-                if (error) {
-                    console.error(error);
-                    return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
-                } else {
-                    return res.json({ success: true, message: 'E-mail para votação enviado com sucesso!' });
-                }
+                transporter.sendMail(mailOptions, function (error, info) {
+                    if (error) {
+                        console.error(error);
+                        return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
+                    } else {
+                        return res.json({ success: true, message: 'E-mail para votação enviado com sucesso!' });
+                    }
+                });
             });
         });
-    })
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 })
 
 app.get('/deletarProjeto', function (req, res) {
-    const { email, id } = req.query;
+    if (req.session.loggedin) {
+        const { email, id } = req.query;
 
-    res.render('deletarProjeto', { email, id });
+        res.render('deletarProjeto', { email, id });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
 app.post('/deletarProjeto', function (req, res) {
-    const id = req.body.id;
-    const sql = 'UPDATE projeto SET voto_deletar = voto_deletar + 1 WHERE id_projeto = ?';
+    if (req.session.loggedin) {
+        const id = req.body.id;
+        const sql = 'UPDATE projeto SET voto_deletar = voto_deletar + 1 WHERE id_projeto = ?';
 
-    connection.query(sql, [id], function (err, results) {
-        if (err) {
-            console.log(err);
-            res.json({ success: false, message: 'Ocorreu um erro ao registrar seu voto! Tente novamente mais tarde.' });
-        } else {
-            connection.query('SELECT COUNT(id_aluno) contagem, voto_deletar FROM projeto_aluno NATURAL JOIN projeto WHERE id_projeto = ?', [id], function (erro, resultado) {
-                if (erro) throw erro;
-                if (((resultado[0].contagem / 2) >= resultado[0].voto_deletar) || resultado[0].contagem == 1) {
-                    connection.query('DELETE FROM projeto WHERE id_projeto = ?', [id], function (erro2, resultado2) {
-                        if (erro2) {
-                            console.log(erro2);
-                            res.json({ success: false, message: 'Erro ao deletar projeto. Contate o Suporte!' });
-                        } else {
-                            console.log(resultado2);
-                            res.json({ success: true, message: 'Seu projeto foi deletado com sucesso!' });
-                        }
-                    })
-                } else {
-                    console.log(resultado);
-                    res.json({ success: true, message: 'Seu voto foi computado. Caso mais da metade dos participantes concordem, seu projeto será excluido!' })
-                }
-            })
-        }
-    });
-});
-
-app.post('/adicionarAluno', function (req, res) {
-    const emails = req.body.email;
-    const idProjeto = req.body.idProjeto;
-
-    const sql = "SELECT * FROM usuario WHERE email IN (?)";
-
-    connection.query(sql, [emails], function (err, results) {
-        if (err) throw err;
-        if (results.length < 1) {
-            return res.json({ success: false, message: 'E-mail(s) sem cadastro! Solicite o(s) a criar uma conta!' });
-        } else {
-            const encontrados = results.map(user => user.email);
-            const id = results.map(user => user.id_usuario);
-            connection.query('SELECT * FROM usuario NATURAL JOIN projeto_aluno WHERE id_aluno IN (?)',
-                [id], function (err2, results2) {
-                    if (err2) throw err2;
-                    if (results2.length) {
-                        const nome = results2[0].nm_usuario;
-                        return res.json({ success: false, message: `Aluno ${nome} já possui um projeto em criado!` })
-                    } else {
-                        encontrados.forEach(email => {
-                            const transporter = nodemailer.createTransport({
-                                service: 'gmail',
-                                auth: {
-                                    user: 'admtccmentor@gmail.com',
-                                    pass: 'rsaq gcbr domf jbkv'
-                                }
-                            });
-                            const mailOptions = {
-                                from: 'TCC Mentor <admtccmentor@gmail.com>',
-                                to: encontrados,
-                                subject: 'Convite Para Projeto - TCC Mentor',
-                                html: `
-                    <p>${req.session.nome} te convidou para entrar em um projeto!</p>
-                    <p>Clique no link abaixo para ver o convite:</p>
-                    <a href="http://localhost:3000/conviteProjeto?email=${email}&id=${idProjeto}">Entre no meu grupo!</a>`
-                            };
-
-                            transporter.sendMail(mailOptions, function (error, info) {
-                                if (error) {
-                                    console.error(error);
-                                    return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
-                                } else {
-                                    return res.json({ success: true, message: 'Solicitação enviada com sucesso!' });
-                                }
-                            });
-                        });
-                    }
-                });
-        }
-    });
-});
-
-app.get('/conviteProjeto', function (req, res) {
-    const emails = req.query.email;
-    const id = req.query.id;
-    const sql = 'SELECT nm_projeto, dc_projeto, tp_projeto FROM projeto WHERE id_projeto = ?';
-
-    connection.query(sql, [id], function (err, results) {
-        const nomeP = results[0].nm_projeto;
-        const descP = results[0].dc_projeto;
-        const tipoP = results[0].tp_projeto;
-
-        res.render('conviteProjeto', { emails, id, nomeP, descP, tipoP });
-    })
-});
-
-app.post('/conviteProjeto', function (req, res) {
-    const { email, id } = req.body;
-    const sql = 'INSERT INTO projeto_aluno (id_projeto, id_aluno) VALUES (?, (SELECT id_usuario FROM usuario WHERE email = ?))';
-
-    connection.query('SELECT * FROM projeto_aluno WHERE id_aluno = (SELECT id_usuario FROM usuario WHERE email = ?)', [email], function (erro, resultado) {
-        if (erro) {
-            console.log(erro);
-            res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' });
-        } else {
-            if (resultado.length !== 0) {
-                res.json({ success: false, message: 'Essa conta já possui um projeto ativo. Não foi possível entrar!' })
+        connection.query(sql, [id], function (err, results) {
+            if (err) {
+                console.log(err);
+                res.json({ success: false, message: 'Ocorreu um erro ao registrar seu voto! Tente novamente mais tarde.' });
             } else {
-                connection.query(sql, [id, email], function (err, results) {
-                    if (err) {
-                        console.log(err);
-                        res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' })
+                connection.query('SELECT COUNT(id_aluno) contagem, voto_deletar FROM projeto_aluno NATURAL JOIN projeto WHERE id_projeto = ?', [id], function (erro, resultado) {
+                    if (erro) throw erro;
+                    if (((resultado[0].contagem / 2) >= resultado[0].voto_deletar) || resultado[0].contagem == 1) {
+                        connection.query('DELETE FROM projeto WHERE id_projeto = ?', [id], function (erro2, resultado2) {
+                            if (erro2) {
+                                console.log(erro2);
+                                res.json({ success: false, message: 'Erro ao deletar projeto. Contate o Suporte!' });
+                            } else {
+                                console.log(resultado2);
+                                res.json({ success: true, message: 'Seu projeto foi deletado com sucesso!' });
+                            }
+                        })
                     } else {
-                        console.log(results);
-                        res.json({ success: true, message: 'Você entrou no projeto! Faça login para continuar.' })
+                        console.log(resultado);
+                        res.json({ success: true, message: 'Seu voto foi computado. Caso mais da metade dos participantes concordem, seu projeto será excluido!' })
                     }
                 })
             }
-        }
-    });
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
+
+app.post('/adicionarAluno', function (req, res) {
+    if (req.session.loggedin) {
+        const emails = req.body.email;
+        const idProjeto = req.body.idProjeto;
+
+        const sql = "SELECT * FROM usuario WHERE email IN (?)";
+
+        connection.query(sql, [emails], function (err, results) {
+            if (err) throw err;
+            if (results.length < 1) {
+                return res.json({ success: false, message: 'E-mail(s) sem cadastro! Solicite o(s) a criar uma conta!' });
+            } else {
+                const encontrados = results.map(user => user.email);
+                const id = results.map(user => user.id_usuario);
+                connection.query('SELECT * FROM usuario NATURAL JOIN projeto_aluno WHERE id_aluno IN (?)',
+                    [id], function (err2, results2) {
+                        if (err2) throw err2;
+                        if (results2.length) {
+                            const nome = results2[0].nm_usuario;
+                            return res.json({ success: false, message: `Aluno ${nome} já possui um projeto em criado!` })
+                        } else {
+                            encontrados.forEach(email => {
+                                const transporter = nodemailer.createTransport({
+                                    service: 'gmail',
+                                    auth: {
+                                        user: 'admtccmentor@gmail.com',
+                                        pass: 'rsaq gcbr domf jbkv'
+                                    }
+                                });
+                                const mailOptions = {
+                                    from: 'TCC Mentor <admtccmentor@gmail.com>',
+                                    to: encontrados,
+                                    subject: 'Convite Para Projeto - TCC Mentor',
+                                    html: `
+                    <p>${req.session.nome} te convidou para entrar em um projeto!</p>
+                    <p>Clique no link abaixo para ver o convite:</p>
+                    <a href="http://localhost:3006/conviteProjeto?email=${email}&id=${idProjeto}">Entre no meu grupo!</a>`
+                                };
+
+                                transporter.sendMail(mailOptions, function (error, info) {
+                                    if (error) {
+                                        console.error(error);
+                                        return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
+                                    } else {
+                                        return res.json({ success: true, message: 'Solicitação enviada com sucesso!' });
+                                    }
+                                });
+                            });
+                        }
+                    });
+            }
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
+
+app.get('/conviteProjeto', function (req, res) {
+    if (req.session.loggedin) {
+        const emails = req.query.email;
+        const id = req.query.id;
+        const sql = 'SELECT nm_projeto, dc_projeto, tp_projeto FROM projeto WHERE id_projeto = ?';
+
+        connection.query(sql, [id], function (err, results) {
+            const nomeP = results[0].nm_projeto;
+            const descP = results[0].dc_projeto;
+            const tipoP = results[0].tp_projeto;
+
+            res.render('conviteProjeto', { emails, id, nomeP, descP, tipoP });
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
+
+app.post('/conviteProjeto', function (req, res) {
+    if (req.session.loggedin) {
+        const { email, id } = req.body;
+        const sql = 'INSERT INTO projeto_aluno (id_projeto, id_aluno) VALUES (?, (SELECT id_usuario FROM usuario WHERE email = ?))';
+
+        connection.query('SELECT * FROM projeto_aluno WHERE id_aluno = (SELECT id_usuario FROM usuario WHERE email = ?)', [email], function (erro, resultado) {
+            if (erro) {
+                console.log(erro);
+                res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' });
+            } else {
+                if (resultado.length !== 0) {
+                    res.json({ success: false, message: 'Essa conta já possui um projeto ativo. Não foi possível entrar!' })
+                } else {
+                    connection.query(sql, [id, email], function (err, results) {
+                        if (err) {
+                            console.log(err);
+                            res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' })
+                        } else {
+                            console.log(results);
+                            res.json({ success: true, message: 'Você entrou no projeto! Faça login para continuar.' })
+                        }
+                    })
+                }
+            }
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
 app.post('/removerAluno', function (req, res) {
-    const aluno = req.body.aluno;
-    let sql = 'DELETE FROM projeto_aluno WHERE id_aluno = ?';
+    if (req.session.loggedin) {
+        const aluno = req.body.aluno;
+        let sql = 'DELETE FROM projeto_aluno WHERE id_aluno = ?';
 
-    connection.query(sql, [aluno], function (err, results) {
-        if (err) {
-            console.log(err);
-            return res.json({ success: false, message: 'Ocorreu um erro ao remover o aluno. Tente novamente mais tarde.' });
-        } else {
-            return res.json({ success: true, message: 'Aluno removido com sucesso!' });
-        }
-    });
+        connection.query(sql, [aluno], function (err, results) {
+            if (err) {
+                console.log(err);
+                return res.json({ success: false, message: 'Ocorreu um erro ao remover o aluno. Tente novamente mais tarde.' });
+            } else {
+                return res.json({ success: true, message: 'Aluno removido com sucesso!' });
+            }
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
 app.get('/mensagens', (req, res) => {
-    const idProjeto = req.query.idProjeto;
+    if (req.session.loggedin) {
+        const idProjeto = req.query.idProjeto;
 
-    if (!idProjeto) {
-        return res.status(400).json({ error: 'ID do projeto não informado' });
-    }
+        if (!idProjeto) {
+            return res.status(400).json({ error: 'ID do projeto não informado' });
+        }
 
-    const sql = `
+        const sql = `
     SELECT mensagem, nm_usuario nmRemetente, remetente, arquivo_pdf,
            DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio_formatada
     FROM mensagem_chat LEFT JOIN usuario ON (id_remetente = id_usuario)
@@ -527,121 +683,131 @@ app.get('/mensagens', (req, res) => {
     ORDER BY data_envio ASC
   `;
 
-    connection.query(sql, [idProjeto], (err, results) => {
-        if (err) {
-            console.error("Erro ao buscar mensagens:", err);
-            return res.status(500).json({ error: 'Erro no servidor' });
-        }
+        connection.query(sql, [idProjeto], (err, results) => {
+            if (err) {
+                console.error("Erro ao buscar mensagens:", err);
+                return res.status(500).json({ error: 'Erro no servidor' });
+            }
 
-        res.json(results);
-    });
+            res.json(results);
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
 app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
-    const { idProjeto, remetente, mensagem } = req.body;
-    const arquivo_pdf = req.file ? req.file.filename : null;
+    if (req.session.loggedin) {
+        const { idProjeto, remetente, mensagem } = req.body;
+        const arquivo_pdf = req.file ? req.file.filename : null;
 
-    const sql = `
+        const sql = `
     INSERT INTO mensagem_chat (id_projeto, remetente, mensagem, arquivo_pdf)
     VALUES (?, ?, ?, ?)
   `;
-    try {
-        await new Promise((resolve, reject) => {
-            connection.query(sql, [idProjeto, remetente, mensagem || null, arquivo_pdf], (err, results) => {
-                if (err) return reject(err);
-                resolve(results);
+        try {
+            await new Promise((resolve, reject) => {
+                connection.query(sql, [idProjeto, remetente, mensagem || null, arquivo_pdf], (err, results) => {
+                    if (err) return reject(err);
+                    resolve(results);
+                });
             });
-        });
 
-        if (remetente === 'ORIE' && arquivo_pdf) {
-            const pdfPath = path.join(__dirname, 'public/uploads', arquivo_pdf);
+            if (remetente === 'ORIE' && arquivo_pdf) {
+                const pdfPath = path.join(__dirname, 'public/uploads', arquivo_pdf);
 
-            const formData = new FormData();
-            formData.append("file", fs.createReadStream(pdfPath));
+                const formData = new FormData();
+                formData.append("file", fs.createReadStream(pdfPath));
 
-            try {
-                const respostaIA = await axios.post("http://localhost:8000/analisarPDF", formData, {
-                    headers: formData.getHeaders(),
-                });
-
-                const mensagemIA = respostaIA.data.resposta;
-
-                await new Promise((resolve, reject) => {
-                    connection.query(sql, [idProjeto, 'IA', mensagemIA, null], (err, results) => {
-                        if (err) return reject(err);
-                        resolve(results);
+                try {
+                    const respostaIA = await axios.post("http://localhost:8000/analisarPDF", formData, {
+                        headers: formData.getHeaders(),
                     });
-                });
 
-            } catch (err) {
-                console.error("Erro ao analisar PDF:", err.response?.data || err.message);
+                    const mensagemIA = respostaIA.data.resposta;
+
+                    await new Promise((resolve, reject) => {
+                        connection.query(sql, [idProjeto, 'IA', mensagemIA, null], (err, results) => {
+                            if (err) return reject(err);
+                            resolve(results);
+                        });
+                    });
+
+                } catch (err) {
+                    console.error("Erro ao analisar PDF:", err.response?.data || err.message);
+                }
             }
+
+            res.json({ sucesso: true });
+
+        } catch (err) {
+            console.error("Erro no envio da mensagem:", err.message);
+            res.status(500).json({ error: 'Erro ao enviar ou processar a mensagem' });
         }
-
-        res.json({ sucesso: true });
-
-    } catch (err) {
-        console.error("Erro no envio da mensagem:", err.message);
-        res.status(500).json({ error: 'Erro ao enviar ou processar a mensagem' });
-    }
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
 app.post('/analisaMsg', async function (req, res) {
-    const mensagem = req.body.msg;
-    const idProjeto = req.body.idProjeto;
+    if (req.session.loggedin) {
+        const mensagem = req.body.msg;
+        const idProjeto = req.body.idProjeto;
 
-    const sql = `INSERT INTO mensagem_chat (id_projeto, remetente, mensagem) VALUES (?, ?, ?)`
+        const sql = `INSERT INTO mensagem_chat (id_projeto, remetente, mensagem) VALUES (?, ?, ?)`
 
-    const respostaIA = await axios.post("http://localhost:8000/analisar", {
-        conteudo: mensagem,
-    });
-    const mensagemIA = respostaIA.data.resposta;
-
-    await new Promise((resolve, reject) => {
-        connection.query(sql, [idProjeto, 'IA', mensagemIA], (err, results) => {
-            if (err) return reject(err);
-            console.log(results)
-            resolve(results);
+        const respostaIA = await axios.post("http://localhost:8000/analisar", {
+            conteudo: mensagem,
         });
-    });
+        const mensagemIA = respostaIA.data.resposta;
 
-})
+        await new Promise((resolve, reject) => {
+            connection.query(sql, [idProjeto, 'IA', mensagemIA], (err, results) => {
+                if (err) return reject(err);
+                console.log(results)
+                resolve(results);
+            });
+        });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+});
 
 app.post('/chatbox', (req, res) => {
-    const { msg, idProjeto } = req.body;
+    if (req.session.loggedin) {
+        const { msg, idProjeto } = req.body;
 
-    const sql = 'SELECT resumo FROM mensagem_chatbox WHERE id_projeto = ? ORDER BY data_envio DESC LIMIT 1';
+        const sql = 'SELECT resumo FROM mensagem_chatbox WHERE id_projeto = ? ORDER BY data_envio DESC LIMIT 1';
 
-    connection.query(sql, [idProjeto], (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Erro no banco' });
-        }
+        connection.query(sql, [idProjeto], (err, results) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ error: 'Erro no banco' });
+            }
 
-        let resumoAntigo = '';
-        if (results.length > 0) {
-            resumoAntigo = results[0].resumo;
-        }
+            let resumoAntigo = '';
+            if (results.length > 0) {
+                resumoAntigo = results[0].resumo;
+            }
 
-        axios.post("http://localhost:8000/chatbox", {
-            conteudo: msg,
-            loggedin: req.session.loggedin,
-            resumo: resumoAntigo,
-        }).then((response) => {
-            const mensagemIA = response.data.resposta;
-            const resumoIA = response.data.resumo;
+            axios.post("http://localhost:8000/chatbox", {
+                conteudo: msg,
+                loggedin: req.session.loggedin,
+                resumo: resumoAntigo,
+            }).then((response) => {
+                const mensagemIA = response.data.resposta;
+                const resumoIA = response.data.resumo;
 
-            const sql2 = "INSERT INTO mensagem_chatbox (id_projeto, resumo) VALUES (?, ?)";
-            connection.query(sql2, [idProjeto, resumoIA], (err2) => {
-                if (err2) console.error(err2);
+                const sql2 = "INSERT INTO mensagem_chatbox (id_projeto, resumo) VALUES (?, ?)";
+                connection.query(sql2, [idProjeto, resumoIA], (err2) => {
+                    if (err2) console.error(err2);
+                });
+
+                res.json({ resposta: mensagemIA });
+            }).catch(error => {
+                console.error(error);
+                res.status(500).json({ error: 'Erro na chamada da IA' });
             });
-
-            res.json({ resposta: mensagemIA });
-        }).catch(error => {
-            console.error(error);
-            res.status(500).json({ error: 'Erro na chamada da IA' });
         });
-    });
+    } else
+        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
 app.get('/adicionarProjeto', function (req, res) {

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <title>Editar Usuário</title>
+</head>
+
+<body>
+    <form id="formEditarUsuario">
+        <input type="text" placeholder="<%=nome%>" disabled>
+        <input type="text" id="nome" placeholder="Digite algo..." maxlength="60" required>
+        <button type="button" id="nmButton" onclick="esconderNome()">Esconder</button>
+        <br>
+        <input type="email" placeholder="<%=email%>" disabled>
+        <input type="email" id="email" placeholder="Digite algo..." maxlength="70" required>
+        <button type="button" id="emButton" onclick="esconderEmail()">Esconder</button>
+
+        <button type="submit">Enviar</button>
+    </form>
+
+    <form id="formEditarSenha">
+        <label for="senhaAntiga">Senha Antiga: </label>
+        <input type="text" id="senhaAntiga" required>
+
+        <label for="senhaAtual">Nova Senha: </label>
+        <input type="text" id="senhaAtual" minlength="8" required>
+        <label for="confirmSenha">Confirme sua nova senha: </label>
+        <input type="text" id="confirmSenha" required>
+        <p id="messageError"></p>
+
+        <button type="submit">Enviar</button>
+    </form>
+
+    <button type="submit" id="deletarConta"><strong>Deletar Conta</strong></button>
+
+    <script>
+        function esconderNome() {
+            const nomeInp = document.getElementById('nome');
+            const nmBut = document.getElementById('nmButton');
+            if (nomeInp.hidden) {
+                nomeInp.hidden = false;
+                nmBut.innerText = 'Esconder';
+                nomeInp.setAttribute('required', '');
+
+            } else {
+                nomeInp.hidden = true;
+                nomeInp.value = '';
+                nmBut.innerText = 'Mostrar';
+                nomeInp.removeAttribute('required');
+            }
+        }
+
+        function esconderEmail() {
+            const emailInp = document.getElementById('email');
+            const emBut = document.getElementById('emButton');
+            if (emailInp.hidden) {
+                emailInp.hidden = false;
+                emBut.innerText = 'Esconder';
+                emailInp.setAttribute('required', '');
+
+            } else {
+                emailInp.hidden = true;
+                emailInp.value = '';
+                emBut.innerText = 'Mostrar';
+                emailInp.removeAttribute('required');
+            }
+        }
+
+        document.getElementById('formEditarUsuario').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            const senha = '<%= senha %>'
+
+            try {
+                const response = await fetch('/editarUsuario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nome, email })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(data.mensagem);
+                    window.location.href = ('/home');
+                } else {
+                    const erro = await response.json();
+                    alert(erro.mensagem || 'Erro ao enviar.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        document.getElementById('formEditarSenha').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const senhaAntiga = document.getElementById('senhaAntiga').value;
+            const senhaAtual = document.getElementById('senhaAtual').value;
+            const confirmSenha = document.getElementById('confirmSenha').value;
+            const msg = document.getElementById('messageError');
+
+            if (senhaAtual !== confirmSenha) {
+                msg.innerHTML = 'Senhas não coincidem!';
+            } else {
+                msg.innerHTML = '';
+                try {
+                    const response = await fetch('/editarSenha', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ senhaAntiga, senhaAtual })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        alert(data.mensagem);
+                        window.location.href = ('/home');
+                    } else {
+                        const erro = await response.json();
+                        alert(erro.mensagem || 'Erro ao enviar.')
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        });
+
+        document.getElementById('deletarConta').addEventListener('click', async function (e) {
+            e.preventDefault();
+            const email = '<%= email %>';
+
+            try {
+                const response = await fetch('/emailDeletarUsuario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(data.mensagem);
+                    window.location.href = ('/')
+                } else {
+                    const erro = await response.json();
+                    alert(erro.mensagem || 'Erro ao enviar.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+
+</html>
