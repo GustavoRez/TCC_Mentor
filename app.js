@@ -241,7 +241,7 @@ app.get('/home', function (req, res) {
 
     if (req.session.loggedin) {
         if (req.session.cargo === 'ALUN') {
-            sql = "SELECT nm_projeto, tp_projeto, o.nm_usuario orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM usuario o JOIN projeto ON (o.id_usuario = id_orientador) NATURAL JOIN projeto_aluno JOIN usuario a ON (id_aluno = a.id_usuario) WHERE id_projeto = (SELECT id_projeto FROM projeto_aluno WHERE id_aluno = ?) GROUP BY a.nm_usuario";
+            sql = "SELECT p.nm_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno WHERE p.id_projeto = (SELECT id_projeto FROM projeto_aluno WHERE id_aluno = ? LIMIT 1) GROUP BY p.nm_projeto, p.tp_projeto, o.nm_usuario;";
         } else {
             sql = "SELECT p.nm_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(a.nm_usuario SEPARATOR ', ') AS alunos FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno WHERE o.id_usuario = ? GROUP BY p.id_projeto";
         }
@@ -277,7 +277,7 @@ app.get('/projeto-:projectURL', function (req, res) {
         const dtMensagem = [];
         const remetente = [];
         const nmRemetente = [];
-        let sql = "SELECT p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(DISTINCT a.nm_usuario SEPARATOR ', ') AS alunos, m.remetente, m.mensagem, u.nm_usuario AS nmRemetente, DATE_FORMAT(m.data_envio, '%d/%m/%Y - %H:%i') AS data_envio FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno LEFT JOIN mensagem_chat m ON m.id_projeto = p.id_projeto JOIN usuario u ON m.id_remetente = u.id_usuario WHERE url = ? GROUP BY p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario, m.remetente, m.mensagem, m.data_envio";
+        let sql = "SELECT p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(DISTINCT a.nm_usuario SEPARATOR ', ') AS alunos, m.remetente, m.mensagem, u.nm_usuario AS nmRemetente, DATE_FORMAT(m.data_envio, '%d/%m/%Y - %H:%i') AS data_envio FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno LEFT JOIN mensagem_chat m ON m.id_projeto = p.id_projeto LEFT JOIN usuario u ON m.id_remetente = u.id_usuario WHERE url = ? GROUP BY p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario, m.remetente, m.mensagem, m.data_envio";
 
         connection.query(sql, URL, function (err, results) {
             if (err) throw err;
@@ -698,15 +698,16 @@ app.get('/mensagens', (req, res) => {
 app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
     if (req.session.loggedin) {
         const { idProjeto, remetente, mensagem } = req.body;
+        const idRemetente = req.session.idUser; 
         const arquivo_pdf = req.file ? req.file.filename : null;
 
         const sql = `
-    INSERT INTO mensagem_chat (id_projeto, remetente, mensagem, arquivo_pdf)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO mensagem_chat (id_projeto, remetente, id_remetente, mensagem, arquivo_pdf)
+    VALUES (?, ?, ?, ?, ?)
   `;
         try {
             await new Promise((resolve, reject) => {
-                connection.query(sql, [idProjeto, remetente, mensagem || null, arquivo_pdf], (err, results) => {
+                connection.query(sql, [idProjeto, remetente, idRemetente, mensagem || null, arquivo_pdf], (err, results) => {
                     if (err) return reject(err);
                     resolve(results);
                 });
@@ -819,12 +820,12 @@ app.get('/adicionarProjeto', function (req, res) {
 })
 
 app.post('/adicionarProjeto', function (req, res) {
-    const { nome, desc, tipo, alunos, orientador } = req.body;
-    let coorientador;
+    const { nome, desc, tipo, orientador } = req.body;
+    console.log(nome)
     const url = nome.toLowerCase().replace(/\s+/g, '-');
 
     if (req.session.cargo === 'ALUN')
-        orientador, coorientador = req.body
+        orientador = req.body
     else
         orientador = req.session.idUser
 

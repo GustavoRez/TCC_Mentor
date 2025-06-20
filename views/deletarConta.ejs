@@ -5,13 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="deleteConta.css">
     <title>Deletar conta</title>
 </head>
 
 <body>
-    <input type="email" id="email" placeholder="Insira seu email para continuar">
-    <button id="botaoEnviar">Enviar</button>
-    <p id="message"></p>
+    <div class="container">
+        <h1>Deletar Conta</h1>
+        <input type="email" id="email" placeholder="Insira seu email para continuar" required>
+        <button id="botaoEnviar">Enviar</button>
+        <p id="message"></p>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {

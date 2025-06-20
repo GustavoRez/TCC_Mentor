@@ -18,7 +18,7 @@
         </a>
         <h1>Adicione seu TCC</h1>
 
-    <form id="addProject" method="post">
+    <form id="addProject">
 
         <label for="nome">Nome do projeto:</label>
         <input type="text" id="nome" placeholder="Insira o nome" maxlength="60" required>
@@ -86,20 +86,8 @@
             const nome = document.getElementById('nome').value;
             const desc = document.getElementById('desc').value;
             const tipo = document.getElementById('tipo').value;
-            let orientador = null;
-            let coorientador = null;
-            let alunos = [];
-
-            if ('<%=cargo%>' === 'ALUN') {
-                orientador = document.getElementById('orient').value;
-                coorientador = document.getElementById('coor').value;
-            } else {
-                const alunoInputs = document.querySelectorAll('input[name="alunos[]"]');
-                alunos = Array.from(alunoInputs)
-                    .map(input => input.value.trim())
-                    .filter(valor => valor !== '');
-
-            }
+            const orientador = document.getElementById('orient').value;
+            
             e.preventDefault();
 
             fetch('/adicionarProjeto', {
@@ -107,7 +95,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ nome, desc, tipo, orientador, coorientador, alunos })
+                body: JSON.stringify({ nome, desc, tipo, orientador })
             })
                 .then(response => response.json())
                 .then(data => {
