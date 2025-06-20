@@ -111,7 +111,7 @@ p {
 
 /* Se for maior que esse tanto esconde a barra lateral */
 @media screen and (min-width: 1800px) {
-    body {
+    html, body {
     height: 100%;
     overflow-y: hidden;
     }
