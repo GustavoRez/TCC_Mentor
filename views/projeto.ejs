@@ -165,7 +165,7 @@
                         ${msg.mensagem ? `<h2>${msg.mensagem} ${podeAnalisar ? `<button class="analisar-btn" onclick="analisaMsg(this, '${msg.mensagem}')">Analisar</button>` : ''}</h2>` : ''}
                         ${msg.arquivo_pdf ? `<a href="/uploads/${msg.arquivo_pdf}" target="_blank">📎 Ver PDF</a>` : ''}
                         <h4>${msg.data_envio_formatada}</h4>
-                        <h4>${msg.nmRemetente ? msg.nmRemetente : 'IA'} - ${msg.remetente === 'ALUN' ? 'Aluno' : 'Orientador'}</h4>
+                        <h4>${msg.nmRemetente ? msg.nmRemetente : 'Tessy AI'} - ${msg.remetente === 'ALUN' ? 'Aluno' : 'Orientador'}</h4>
                     </div>
                 `;
                     });

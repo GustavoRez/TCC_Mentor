@@ -60,6 +60,8 @@ app.post('/login', async function (req, res) {
         return res.json({ success: false, message: 'Usuário não encotrado. Verfique seu email.' });
     }
 
+    if (error) throw error;
+
     const senhaValida = await bcrypt.compare(pass, data.senha);
 
     if (senhaValida) {
@@ -80,82 +82,109 @@ app.get('/esqueciSenha', function (req, res) {
 app.post('/esqueciSenha', async function (req, res) {
     const email = req.body.email;
 
-    connection.query(sql, email, function (err, results) {
-        if (err) throw err;
-        if (results.length < 1) {
-            return res.json({ success: false, message: 'Esse e-mail não possui cadastro ou ainda não foi verificado!' });
+    const { data, error } = await supabase
+        .from('usuario')
+        .select('*')
+        .eq('email', email)
+
+    if (error) throw error;
+
+    if (data.length < 1) {
+        return res.json({ success: false, message: 'Esse e-mail não possui cadastro ou ainda não foi verificado!' });
+    }
+
+    const token = crypto.randomBytes(20).toString('hex');
+    const expira = new Date(Date.now() + 60 * 60 * 1000);
+
+    const { data: dataUpdate, error: errorUpdate } = await supabase
+        .from('usuario')
+        .update(
+            {
+                token_recuperacao: token,
+                token_expira: expira
+            }
+        )
+        .eq('email', email)
+
+    if (errorUpdate) {
+        console.log(errorUpdate)
+    };
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'admtccmentor@gmail.com',
+            pass: 'rsaq gcbr domf jbkv'
         }
-        const token = crypto.randomBytes(20).toString('hex');
-        const tokenSql = `UPDATE usuario SET token_recuperacao = ?, token_expira = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE email = ?`;
-        connection.query(tokenSql, [token, email], (err, results) => {
-            if (err) throw err;
+    });
 
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: 'admtccmentor@gmail.com',
-                    pass: 'rsaq gcbr domf jbkv'
-                }
-            });
-
-            const mailOptions = {
-                from: 'TCC Mentor <admtccmentor@gmail.com>',
-                to: email,
-                subject: 'Recuperação de Senha - TCC Mentor',
-                html: `
+    const mailOptions = {
+        from: 'TCC Mentor <admtccmentor@gmail.com>',
+        to: email,
+        subject: 'Recuperação de Senha - TCC Mentor',
+        html: `
                     <p>Você solicitou a recuperação de senha.</p>
                     <p>Clique no link abaixo para redefinir sua senha:</p>
                     <a href="http://localhost:3006/redefinirSenha?token=${token}&email=${email}">Redefinir Senha</a>
                     <p>Este link é válido por 1 hora.</p>
                 `
-            };
+    };
 
-            transporter.sendMail(mailOptions, function (error, info) {
-                if (error) {
-                    console.error(error);
-                    return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
-                } else {
-                    return res.json({ success: true, message: 'E-mail de recuperação enviado com sucesso!' });
-                }
-            });
-        });
-    })
-})
-
-app.get('/redefinirSenha', function (req, res) {
-    const { email, token } = req.query;
-    const sql = "SELECT * FROM usuario WHERE email = ? AND token_recuperacao = ?";
-    connection.query(sql, [email, token], (err, results) => {
-        if (err) throw err;
-        if (results.length === 0) {
-            return res.send('Token inválido ou expirado. Solicite outro!');
-        }
-
-        const usuario = results[0];
-        const agora = new Date();
-        if (agora > usuario.token_expira) {
-            return res.send('Token expirado. Solicite outro!');
-        }
-
-        res.render('redefinirSenha', { email, token });
-    });
-})
-
-app.post('/redefinirSenha', function (req, res) {
-    const { senha, email } = req.body;
-    const sql = "UPDATE usuario SET senha = MD5(?), token_recuperacao = NULL, token_expira = NULL WHERE email = ?";
-
-    connection.query(sql, [senha, email], function (err, results) {
-        if (err) {
-            console.log(err);
-            return res.json({ success: false, message: 'Erro ao alterar senha.' });
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.error(error);
+            return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
         } else {
-            console.log(results);
-            return res.json({ success: true, message: 'Senha alterada! Faça o login para continuar.' });
+            return res.json({ success: true, message: 'E-mail de recuperação enviado com sucesso!' });
         }
-    })
+    });
+});
 
-})
+app.get('/redefinirSenha', async function (req, res) {
+    const { email, token } = req.query;
+
+    const { data, error } = await supabase
+        .from('usuario')
+        .select('*')
+        .eq('email', email)
+        .eq('token_recuperacao', token)
+
+    if (error) throw error;
+    if (data.length === 0) {
+        return res.send('Token inválido ou expirado. Solicite outro!');
+    }
+
+    const usuario = data[0];
+    const agora = new Date();
+    if (agora > usuario.token_expira) {
+        return res.send('Token expirado. Solicite outro!');
+    }
+
+    res.render('redefinirSenha', { email, token });
+});
+
+app.post('/redefinirSenha', async function (req, res) {
+    const { senha, email } = req.body;
+    const senhaHash = await bcrypt.hash(senha, 10)
+
+    const { data, error } = await supabase
+        .from('usuario')
+        .update(
+            {
+                senha: senhaHash,
+                token_recuperacao: null
+            }
+        )
+        .eq('email', email)
+
+    if (error) {
+        console.log(error);
+        return res.json({ success: false, message: 'Erro ao alterar senha.' });
+    } else {
+        console.log(data);
+        return res.json({ success: true, message: 'Senha alterada! Faça o login para continuar.' });
+    }
+});
 
 app.get('/cadastro', function (req, res) {
     res.sendFile(path.join(__dirname + '/views/cadastro.html'));
@@ -228,11 +257,11 @@ app.get('/confirmarEmail', async function (req, res) {
     let msg;
     const { data, error } = await supabase
         .from('usuario')
-        .update([
+        .update(
             {
                 email: email
             }
-        ])
+        )
         .eq('token', token)
         .select();
 
@@ -296,7 +325,7 @@ app.get('/home', async function (req, res) {
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
-app.get('/projeto-:projectURL', function (req, res) {
+app.get('/projeto-:projectURL', async function (req, res) {
     if (req.session.loggedin) {
         const URL = req.params.projectURL;
         const cargo = req.session.cargo;
@@ -310,28 +339,29 @@ app.get('/projeto-:projectURL', function (req, res) {
         const dtMensagem = [];
         const remetente = [];
         const nmRemetente = [];
-        let sql = "SELECT p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario AS orientador, GROUP_CONCAT(DISTINCT a.nm_usuario SEPARATOR ', ') AS alunos, m.remetente, m.mensagem, u.nm_usuario AS nmRemetente, DATE_FORMAT(m.data_envio, '%d/%m/%Y - %H:%i') AS data_envio FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno LEFT JOIN mensagem_chat m ON m.id_projeto = p.id_projeto LEFT JOIN usuario u ON m.id_remetente = u.id_usuario WHERE url = ? GROUP BY p.id_projeto, p.nm_projeto, p.dc_projeto, p.tp_projeto, o.nm_usuario, m.remetente, m.mensagem, m.data_envio";
 
-        connection.query(sql, URL, function (err, results) {
-            if (err) throw err;
-            idProjeto = results[0].id_projeto;
-            projeto = results[0].nm_projeto;
-            desc = results[0].dc_projeto;
-            tipo = results[0].tp_projeto;
-            orientador = results[0].orientador;
-            aluno = results[0].alunos
+        const { data, error } = await supabase.rpc(
+            'buscar_projeto_por_url',
+            { url_param: URL }
+        );
 
-            const mensagens = results
-                .filter(r => r.mensagem !== null)
-                .map(r => ({
-                    mensagem: r.mensagem,
-                    data_envio: r.data_envio,
-                    remetente: r.remetente,
-                    nmRemetente: r.nmRemetente
-                }));
-            res.render('projeto', { cargo, idProjeto, projeto, desc, tipo, orientador, aluno, mensagens })
-        })
+        if (error) throw error;
+        idProjeto = data[0].id_projeto;
+        projeto = data[0].nm_projeto;
+        desc = data[0].dc_projeto;
+        tipo = data[0].tp_projeto;
+        orientador = data[0].orientador;
+        aluno = data[0].alunos
 
+        const mensagens = data
+            .filter(r => r.mensagem !== null)
+            .map(r => ({
+                mensagem: r.mensagem,
+                data_envio: r.data_envio,
+                remetente: r.remetente,
+                nmRemetente: r.nmRemetente
+            }));
+        res.render('projeto', { cargo, idProjeto, projeto, desc, tipo, orientador, aluno, mensagens })
 
     } else
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
@@ -700,7 +730,7 @@ app.post('/removerAluno', function (req, res) {
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
-app.get('/mensagens', (req, res) => {
+app.get('/mensagens', async (req, res) => {
     if (req.session.loggedin) {
         const idProjeto = req.query.idProjeto;
 
@@ -708,22 +738,18 @@ app.get('/mensagens', (req, res) => {
             return res.status(400).json({ error: 'ID do projeto não informado' });
         }
 
-        const sql = `
-    SELECT mensagem, nm_usuario nmRemetente, remetente, arquivo_pdf,
-           DATE_FORMAT(data_envio, '%d/%m/%Y - %H:%i') AS data_envio_formatada
-    FROM mensagem_chat LEFT JOIN usuario ON (id_remetente = id_usuario)
-    WHERE id_projeto = ?
-    ORDER BY data_envio ASC
-  `;
+        const { data, error } = await supabase.rpc(
+            'buscar_mensagens',
+            { id_projeto_param: idProjeto }
+        );
 
-        connection.query(sql, [idProjeto], (err, results) => {
-            if (err) {
-                console.error("Erro ao buscar mensagens:", err);
-                return res.status(500).json({ error: 'Erro no servidor' });
-            }
+        if (error) {
+            console.error("Erro ao buscar mensagens:", err);
+            return res.status(500).json({ error: 'Erro no servidor' });
+        }
 
-            res.json(results);
-        });
+        res.json(data);
+
     } else
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
@@ -734,16 +760,20 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
         const idRemetente = req.session.idUser;
         const arquivo_pdf = req.file ? req.file.filename : null;
 
-        const sql = `
-    INSERT INTO mensagem_chat (id_projeto, remetente, id_remetente, mensagem, arquivo_pdf)
-    VALUES (?, ?, ?, ?, ?)
-  `;
+        const { data, error } = await supabase
+            .from('mensagem_chat')
+            .insert({
+                id_projeto: idProjeto,
+                remetente: remetente,
+                id_remetente: idRemetente,
+                mensagem: mensagem,
+                arquivo_pdf: arquivo_pdf
+            });
+
         try {
             await new Promise((resolve, reject) => {
-                connection.query(sql, [idProjeto, remetente, idRemetente, mensagem || null, arquivo_pdf], (err, results) => {
-                    if (err) return reject(err);
-                    resolve(results);
-                });
+                if (error) return reject(error);
+                resolve(data);
             });
 
             if (remetente === 'ORIE' && arquivo_pdf) {
@@ -759,11 +789,18 @@ app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
 
                     const mensagemIA = respostaIA.data.resposta;
 
-                    await new Promise((resolve, reject) => {
-                        connection.query(sql, [idProjeto, 'IA', mensagemIA, null], (err, results) => {
-                            if (err) return reject(err);
-                            resolve(results);
+                    const { data: dataIA, error: errorIA } = await supabase
+                        .from('mensagem_chat')
+                        .insert({
+                            id_projeto: idProjeto,
+                            remetente: 'IA',
+                            mensagem: mensagemIA,
+                            arquivo_pdf: null
                         });
+
+                    await new Promise((resolve, reject) => {
+                        if (errorIA) return reject(errorIA);
+                        resolve(dataIA);
                     });
 
                 } catch (err) {
@@ -786,20 +823,28 @@ app.post('/analisaMsg', async function (req, res) {
         const mensagem = req.body.msg;
         const idProjeto = req.body.idProjeto;
 
-        const sql = `INSERT INTO mensagem_chat (id_projeto, remetente, mensagem) VALUES (?, ?, ?)`
+        console.log(mensagem)
+        const url = `https://linhaguga.app.n8n.cloud/webhook/analyse-webhook?message=${mensagem}`;
 
-        const respostaIA = await axios.post("http://localhost:8000/analisar", {
-            conteudo: mensagem,
+        const res = await fetch(url, {
+            method: "GET"
         });
-        const mensagemIA = respostaIA.data.resposta;
 
-        await new Promise((resolve, reject) => {
-            connection.query(sql, [idProjeto, 'IA', mensagemIA], (err, results) => {
-                if (err) return reject(err);
-                console.log(results)
-                resolve(results);
-            });
-        });
+        const data = await res.json();
+
+        const { data: dataI, error: errorI } = await supabase
+            .from('mensagem_chat')
+            .insert({
+                id_projeto: idProjeto,
+                remetente: 'Tessy AI',
+                mensagem: data.analise
+            })
+            .select();
+
+        if (errorI) {
+            console.log(errorI);
+        }
+
     } else
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
