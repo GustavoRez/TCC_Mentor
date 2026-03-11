@@ -3,24 +3,14 @@
   "builds": [
     {
       "src": "app.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": { "includeFiles": ["views/**"] }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
       "dest": "app.js"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self' * data: 'unsafe-inline' 'unsafe-eval'; font-src 'self' https://use.typekit.net data:; style-src 'self' 'unsafe-inline' https://use.typekit.net;"
-        }
-      ]
     }
   ]
 }
