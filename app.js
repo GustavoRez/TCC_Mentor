@@ -367,63 +367,75 @@ app.get('/projeto-:projectURL', async function (req, res) {
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
-app.get('/editarProjeto', function (req, res) {
+app.get('/editarProjeto', async function (req, res) {
     if (req.session.loggedin) {
         const idProjeto = req.query.idProjeto;
-        const sql = `SELECT p.tp_projeto tipo, o.nm_usuario AS orientador, GROUP_CONCAT(DISTINCT a.id_usuario SEPARATOR ', ') idAlunos, GROUP_CONCAT(DISTINCT a.nm_usuario SEPARATOR ', ') AS alunos FROM projeto p JOIN usuario o ON o.id_usuario = p.id_orientador JOIN projeto_aluno pa ON pa.id_projeto = p.id_projeto JOIN usuario a ON a.id_usuario = pa.id_aluno WHERE p.id_projeto = ?`;
 
-        connection.query(sql, [idProjeto], function (err, results) {
-            if (err) throw err;
-            const orientador = results[0].orientador;
-            const tipo = results[0].tipo;
-            const idAlunos = results[0].idAlunos ? results[0].idAlunos.split(', ') : [];
-            const alunos = results[0].alunos ? results[0].alunos.split(', ') : [];
+        const { data, error } = await supabase.rpc(
+            'editar_projeto',
+            { id_projeto_param: idProjeto }
+        );
 
-            res.render('editarProjeto', { idProjeto, orientador, idAlunos, alunos, tipo })
-        })
+        if (error) throw error;
+
+        const orientador = data[0].orientador;
+        const tipo = data[0].tipo;
+        const idAlunos = data[0].idAlunos ? data[0].idAlunos.split(', ') : [];
+        const alunos = data[0].alunos ? data[0].alunos.split(', ') : [];
+
+        res.render('editarProjeto', { idProjeto, orientador, idAlunos, alunos, tipo })
     } else
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
-app.get('/editarUsuario', function (req, res) {
+app.get('/editarUsuario', async function (req, res) {
     if (req.session.loggedin) {
         const idUser = req.session.idUser;
         const sql = 'SELECT nm_usuario nome, email, senha FROM usuario WHERE id_usuario = ?';
 
-        connection.query(sql, [idUser], function (err, results) {
-            const nome = results[0].nome;
-            const email = results[0].email;
-            const senha = results[0].senha;
+        const { data, error } = await supabase
+            .from('usuario')
+            .select('nm_usuario, email, senha')
+            .eq('id_usuario', idUser)
 
-            res.render('editarUsuario', { nome, email, senha });
-        })
+        if (error) throw error;
+
+        const nome = data[0].nm_usuario;
+        const email = data[0].email;
+        const senha = data[0].senha;
+
+        res.render('editarUsuario', { nome, email, senha });
+
     } else
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
-app.post('/editarUsuario', function (req, res) {
+app.post('/editarUsuario', async function (req, res) {
     if (req.session.loggedin) {
         const { nome, email } = req.body;
-        let variaveis = [];
+        const updates = {};
+
+        if (nome) updates.nm_usuario = nome;
+        if (email) updates.email = email;
+
 
         if (!nome && !email) {
             return res.status(400).json({ mensagem: 'Não foi feita nenhuma alteração.' });
         }
-        let sql = 'UPDATE usuario SET ';
-        if (nome) { sql += 'nm_usuario = ? '; variaveis.push(nome); }
-        if (email) { sql += 'email = ? '; variaveis.push(email) }
-        sql += 'WHERE id_usuario = ?';
-        variaveis.push(req.session.idUser)
 
-        connection.query(sql, variaveis, function (err, results) {
-            if (err) {
-                console.log(err);
-                return res.status(400).json({ mensagem: 'Ocorreu um erro ao atualizar esse perfil! Tente novamente mais tarde.' });
-            } else {
-                console.log(results);
-                return res.status(200).json({ mensagem: 'Perfil atualizado com sucesso. Faça login novamente para visualizar!' });
-            }
-        });
+        const { data, error } = await supabase
+            .from('usuario')
+            .update(updates)
+            .eq('id_usuario', req.session.idUser)
+
+        if (error) {
+            console.log(error);
+            return res.status(400).json({ mensagem: 'Ocorreu um erro ao atualizar esse perfil! Tente novamente mais tarde.' });
+        } else {
+            if (nome) req.session.nome = nome;
+            return res.status(200).json({ mensagem: 'Perfil atualizado com sucesso. Redirecionando para página inicial.' });
+        }
+
     } else
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });

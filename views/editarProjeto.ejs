@@ -9,6 +9,32 @@
     <link rel="stylesheet" href="/EditarProjeto.css">
     <title>Edite seu projeto!</title>
 </head>
+
+<body>
+
+    <div class="Projeto-container">
+        <a class="voltar" href="javascript:history.back()">
+            <p>⬅</p>
+        </a>
+        <h1>Editar Projeto</h1>
+        <form id="alterarIntegrantes" method="post">
+
+            <input class="integrantes" type="text" value="<%= orientador %>" disabled>
+            <% alunos.forEach((aluno, index)=> { %>
+                <input class="integrantes" type="text" name="aluno<%= index %>" value="<%= aluno %>" disabled>
+                <div id="alunos-container">
+                    <input class="botao" type="button" name="button<%= index %>" value="Remover"
+                        onclick="removeAluno('<%= idAlunos[index] %>', '<%= aluno %>')">
+                </div>
+                <% }) %>
+                    <input class="botao" type="button" value="+" onclick="adicionarAluno()">
+                    <p id="message"></p>
+
+                    <button type="submit">Editar</button>
+        </form>
+    </div>
+</body>
+
 <script>
     let novosAlunos = 0;
     function adicionarAluno() {
@@ -18,7 +44,7 @@
         else if (tipo === 'Artigo Científico') limite = 2;
 
         // caso tenha um espaco entre % e -, remova-o
-        let alunos = <% - JSON.stringify(alunos) %>;
+        let alunos = <%- JSON.stringify(alunos) %>;
         const messageDiv = document.getElementById('message');
         if (alunos.length + novosAlunos >= limite) {
             messageDiv.innerHTML = `<p"><strong>Número limite de alunos atingido (3 alunos).</strong></p>`;
@@ -84,30 +110,5 @@
             })
     })
 </script>
-
-<body>
-
-    <div class="Projeto-container">
-        <a class="voltar" href="/home">
-            <p>⬅</p>
-        </a>
-        <h1>Editar Projeto</h1>
-        <form id="alterarIntegrantes" method="post">
-
-            <input class="integrantes" type="text" value="<%= orientador %>" disabled>
-            <% alunos.forEach((aluno, index)=> { %>
-                <input class="integrantes" type="text" name="aluno<%= index %>" value="<%= aluno %>" disabled>
-                <div id="alunos-container">
-                    <input class="botao" type="button" name="button<%= index %>" value="Remover"
-                        onclick="removeAluno('<%= idAlunos[index] %>', '<%= aluno %>')">
-                </div>
-                <% }) %>
-                    <input class="botao" type="button" value="+" onclick="adicionarAluno()">
-                    <p id="message"></p>
-
-                    <button type="submit">Editar</button>
-        </form>
-    </div>
-</body>
 
 </html>
