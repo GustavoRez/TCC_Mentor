@@ -66,7 +66,7 @@ app.get('/', function (req, res) {
 });
 
 app.get('/login', function (req, res) {
-    if (verificarLogin) res.redirect('/home')
+    if (req.cookies.token) res.redirect('/home')
     else res.sendFile(path.join(__dirname + '/views/login.html'));
 });
 
