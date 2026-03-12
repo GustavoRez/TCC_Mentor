@@ -11,6 +11,10 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { supabase } = require("./supabaseClient");
 const bcrypt = require('bcrypt');
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+
+app.use(cookieParser())
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,12 +42,32 @@ app.use(session({
     saveUninitialized: true
 }));
 
+function verificarLogin(req, res, next) {
+
+    const token = req.cookies.token
+
+    if (!token) {
+        return res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    }
+
+    try {
+        const usuario = jwt.verify(token, process.env.JWT_SECRET)
+
+        req.usuario = usuario
+
+        next()
+    } catch {
+        return res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    }
+}
+
 app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname + '/views/tela_inicial.html'));
 });
 
 app.get('/login', function (req, res) {
-    res.sendFile(path.join(__dirname + '/views/login.html'));
+    if (verificarLogin) res.redirect('/home')
+    else res.sendFile(path.join(__dirname + '/views/login.html'));
 });
 
 app.post('/login', async function (req, res) {
@@ -69,6 +93,23 @@ app.post('/login', async function (req, res) {
         req.session.idUser = data.id_usuario;
         req.session.nome = data.nm_usuario;
         req.session.cargo = data.cargo;
+
+        const token = jwt.sign(
+            {
+                id: data.id_usuario,
+                nome: data.nm_usuario,
+                cargo: data.cargo
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        )
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict"
+        })
+
         return res.json({ success: true, message: 'Login concluído! Redirecionando...' });
     } else {
         return res.json({ success: false, message: 'Login e/ou senha incorretos.' });
@@ -280,13 +321,14 @@ app.post('/quit', function (req, res) {
     req.session.username = null;
     req.session.avatar = null;
     req.session.cargo = null;
+    res.clearCookie("token")
     res.redirect('/')
 });
 
-app.get('/home', async function (req, res) {
-    const nome = req.session.nome;
-    const id = req.session.idUser;
-    const cargo = req.session.cargo;
+app.get('/home', verificarLogin, async function (req, res) {
+    const nome = req.usuario.nome;
+    const id = req.usuario.id;
+    const cargo = req.usuario.cargo;
     let nomeProjetos = [];
     let tipos = [];
     let orientadores = [];
@@ -294,41 +336,36 @@ app.get('/home', async function (req, res) {
     let dados;
     let err;
 
-    if (req.session.loggedin) {
-        if (req.session.cargo === 'ALUN') {
-            const { data, error } = await supabase.rpc('buscar_projeto_por_aluno', {
-                id_aluno_param: id
-            });
-            dados = data;
-            err = error;
-        } else {
-            const { data, error } = await supabase.rpc('buscar_projetos_por_orientador', {
-                id_orientador_param: id
-            });
-            dados = data;
-            err = error;
-        }
+    if (req.usuario.cargo === 'ALUN') {
+        const { data, error } = await supabase.rpc('buscar_projeto_por_aluno', {
+            id_aluno_param: id
+        });
+        dados = data;
+        err = error;
+    } else {
+        const { data, error } = await supabase.rpc('buscar_projetos_por_orientador', {
+            id_orientador_param: id
+        });
+        dados = data;
+        err = error;
+    }
 
-        if (err) throw err;
-        for (var i = 0; i < dados.length; i++) {
-            nomeProjetos[i] = dados[i].nm_projeto;
-            tipos[i] = dados[i].tp_projeto;
-            orientadores[i] = dados[i].orientador;
-            alunos[i] = dados[i].alunos;
-        }
-        if (nomeProjetos[0] == null) {
-            nomeProjetos = '';
-        }
-        res.render('home', { id, nome, cargo, nomeProjetos, tipos, orientadores, alunos });
-
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    if (err) throw err;
+    for (var i = 0; i < dados.length; i++) {
+        nomeProjetos[i] = dados[i].nm_projeto;
+        tipos[i] = dados[i].tp_projeto;
+        orientadores[i] = dados[i].orientador;
+        alunos[i] = dados[i].alunos;
+    }
+    if (nomeProjetos[0] == null) {
+        nomeProjetos = '';
+    }
+    res.render('home', { id, nome, cargo, nomeProjetos, tipos, orientadores, alunos });
 });
 
-app.get('/projeto-:projectURL', async function (req, res) {
-    if (req.session.loggedin) {
+app.get('/projeto-:projectURL', verificarLogin, async function (req, res) {
         const URL = req.params.projectURL;
-        const cargo = req.session.cargo;
+        const cargo = req.usuario.cargo;
         let idProjeto;
         let projeto;
         let desc;
@@ -362,9 +399,6 @@ app.get('/projeto-:projectURL', async function (req, res) {
                 nmRemetente: r.nmRemetente
             }));
         res.render('projeto', { cargo, idProjeto, projeto, desc, tipo, orientador, aluno, mensagens })
-
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
 app.get('/editarProjeto', async function (req, res) {
