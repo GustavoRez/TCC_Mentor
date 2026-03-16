@@ -37,12 +37,12 @@
         <form id="formEditarSenha">
             <div class="form-group">
                 <label for="senhaAntiga">Senha Antiga:</label>
-                <input type="password" id="senhaAntiga" required>
+                <input type="password" id="senhaAntiga" autocomplete="off" required>
             </div>
 
             <div class="form-group">
                 <label for="senhaAtual">Nova Senha:</label>
-                <input type="password" id="senhaAtual" minlength="8" required>
+                <input type="password" id="senhaAtual" minlength="8" autocomplete="off" required>
             </div>
 
             <div class="form-group">
@@ -143,10 +143,12 @@
                     });
                     if (response.ok) {
                         const data = await response.json();
+                        msg.style.color = 'rgb(0, 255, 0)';
                         msg.innerHTML = (data.mensagem);
                         window.location.href = ('/home');
                     } else {
                         const erro = await response.json();
+                        msg.style.color = 'red';
                         msg.innerHTML = (erro.mensagem || 'Erro ao enviar.');
 
                     }

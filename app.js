@@ -321,7 +321,7 @@ app.post('/quit', function (req, res) {
     req.session.username = null;
     req.session.avatar = null;
     req.session.cargo = null;
-    res.clearCookie("token")
+    res.clearCookie("token");
     res.redirect('/')
 });
 
@@ -364,149 +364,143 @@ app.get('/home', verificarLogin, async function (req, res) {
 });
 
 app.get('/projeto-:projectURL', verificarLogin, async function (req, res) {
-        const URL = req.params.projectURL;
-        const cargo = req.usuario.cargo;
-        let idProjeto;
-        let projeto;
-        let desc;
-        let tipo;
-        let orientador;
-        let aluno = [];
-        const mensagem = [];
-        const dtMensagem = [];
-        const remetente = [];
-        const nmRemetente = [];
+    const URL = req.params.projectURL;
+    const cargo = req.usuario.cargo;
+    let idProjeto;
+    let projeto;
+    let desc;
+    let tipo;
+    let orientador;
+    let aluno = [];
+    const mensagem = [];
+    const dtMensagem = [];
+    const remetente = [];
+    const nmRemetente = [];
 
-        const { data, error } = await supabase.rpc(
-            'buscar_projeto_por_url',
-            { url_param: URL }
-        );
+    const { data, error } = await supabase.rpc(
+        'buscar_projeto_por_url',
+        { url_param: URL }
+    );
 
-        if (error) throw error;
-        idProjeto = data[0].id_projeto;
-        projeto = data[0].nm_projeto;
-        desc = data[0].dc_projeto;
-        tipo = data[0].tp_projeto;
-        orientador = data[0].orientador;
-        aluno = data[0].alunos
+    if (error) throw error;
+    idProjeto = data[0].id_projeto;
+    projeto = data[0].nm_projeto;
+    desc = data[0].dc_projeto;
+    tipo = data[0].tp_projeto;
+    orientador = data[0].orientador;
+    aluno = data[0].alunos
 
-        const mensagens = data
-            .filter(r => r.mensagem !== null)
-            .map(r => ({
-                mensagem: r.mensagem,
-                data_envio: r.data_envio,
-                remetente: r.remetente,
-                nmRemetente: r.nmRemetente
-            }));
-        res.render('projeto', { cargo, idProjeto, projeto, desc, tipo, orientador, aluno, mensagens })
+    const mensagens = data
+        .filter(r => r.mensagem !== null)
+        .map(r => ({
+            mensagem: r.mensagem,
+            data_envio: r.data_envio,
+            remetente: r.remetente,
+            nmRemetente: r.nmRemetente
+        }));
+    res.render('projeto', { cargo, idProjeto, projeto, desc, tipo, orientador, aluno, mensagens })
 });
 
-app.get('/editarProjeto', async function (req, res) {
-    if (req.session.loggedin) {
-        const idProjeto = req.query.idProjeto;
+app.get('/editarProjeto', verificarLogin, async function (req, res) {
+    const idProjeto = req.query.idProjeto;
 
-        const { data, error } = await supabase.rpc(
-            'editar_projeto',
-            { id_projeto_param: idProjeto }
-        );
+    const { data, error } = await supabase.rpc(
+        'editar_projeto',
+        { id_projeto_param: idProjeto }
+    );
 
-        if (error) throw error;
+    if (error) throw error;
 
-        const orientador = data[0].orientador;
-        const tipo = data[0].tipo;
-        const idAlunos = data[0].idAlunos ? data[0].idAlunos.split(', ') : [];
-        const alunos = data[0].alunos ? data[0].alunos.split(', ') : [];
+    const orientador = data[0].orientador;
+    const tipo = data[0].tipo;
+    const idAlunos = data[0].idAlunos ? data[0].idAlunos.split(', ') : [];
+    const alunos = data[0].alunos ? data[0].alunos.split(', ') : [];
 
-        res.render('editarProjeto', { idProjeto, orientador, idAlunos, alunos, tipo })
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    res.render('editarProjeto', { idProjeto, orientador, idAlunos, alunos, tipo })
 });
 
-app.get('/editarUsuario', async function (req, res) {
-    if (req.session.loggedin) {
-        const idUser = req.session.idUser;
-        const sql = 'SELECT nm_usuario nome, email, senha FROM usuario WHERE id_usuario = ?';
+app.get('/editarUsuario', verificarLogin, async function (req, res) {
+    const idUser = req.usuario.id;
 
-        const { data, error } = await supabase
-            .from('usuario')
-            .select('nm_usuario, email, senha')
-            .eq('id_usuario', idUser)
+    const { data, error } = await supabase
+        .from('usuario')
+        .select('nm_usuario, email, senha')
+        .eq('id_usuario', idUser)
 
-        if (error) throw error;
+    if (error) throw error;
 
-        const nome = data[0].nm_usuario;
-        const email = data[0].email;
-        const senha = data[0].senha;
+    const nome = data[0].nm_usuario;
+    const email = data[0].email;
+    const senha = data[0].senha;
 
-        res.render('editarUsuario', { nome, email, senha });
-
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    res.render('editarUsuario', { nome, email, senha });
 });
 
-app.post('/editarUsuario', async function (req, res) {
-    if (req.session.loggedin) {
-        const { nome, email } = req.body;
-        const updates = {};
+app.post('/editarUsuario', verificarLogin, async function (req, res) {
+    const { nome, email } = req.body;
+    const updates = {};
 
-        if (nome) updates.nm_usuario = nome;
-        if (email) updates.email = email;
+    if (nome) updates.nm_usuario = nome;
+    if (email) updates.email = email;
 
 
-        if (!nome && !email) {
-            return res.status(400).json({ mensagem: 'Não foi feita nenhuma alteração.' });
-        }
+    if (!nome && !email) {
+        return res.status(400).json({ mensagem: 'Não foi feita nenhuma alteração.' });
+    }
 
-        const { data, error } = await supabase
-            .from('usuario')
-            .update(updates)
-            .eq('id_usuario', req.session.idUser)
+    const { data, error } = await supabase
+        .from('usuario')
+        .update(updates)
+        .eq('id_usuario', req.usuario.id)
 
-        if (error) {
-            console.log(error);
-            return res.status(400).json({ mensagem: 'Ocorreu um erro ao atualizar esse perfil! Tente novamente mais tarde.' });
-        } else {
-            if (nome) req.session.nome = nome;
-            return res.status(200).json({ mensagem: 'Perfil atualizado com sucesso. Redirecionando para página inicial.' });
-        }
-
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    if (error) {
+        console.log(error);
+        return res.status(400).json({ mensagem: 'Ocorreu um erro ao atualizar esse perfil! Tente novamente mais tarde.' });
+    } else {
+        if (nome) req.session.nome = nome;
+        return res.status(200).json({ mensagem: 'Perfil atualizado com sucesso. Redirecionando para página inicial.' });
+    }
 });
 
-app.post('/editarSenha', function (req, res) {
-    if (req.session.loggedin) {
-        const { senhaAntiga, senhaAtual } = req.body;
-        const id = req.session.idUser;
+app.post('/editarSenha', verificarLogin, async function (req, res) {
+    const { senhaAntiga, senhaAtual } = req.body;
+    const idUser = req.usuario.id;
 
-        let sql = 'SELECT * FROM usuario WHERE id_usuario = ? AND senha = MD5(?)';
 
-        connection.query(sql, [id, senhaAntiga], function (err, results) {
-            if (err) {
-                console.log(err);
-                return res.status(400).json({ mensagem: 'Ocorreu uma erro interno! Tente novamente mais tarde.' })
-            }
-            else {
-                if (!results.length) {
-                    return res.status(400).json({ mensagem: 'Sua senha antiga está errada! Tente novamente.' })
-                }
-                connection.query('UPDATE usuario SET senha = MD5(?) WHERE id_usuario = ?', [senhaAtual, id], function (erro, resultado) {
-                    if (erro) {
-                        console.log(erro);
-                        return res.status(400).json({ mensagem: 'Ocorreu um erro ao tentar alterar sua senha! Tente novamente mais tarde.' })
-                    } else {
-                        console.log(resultado);
-                        return res.status(200).json({ mensagem: 'Senha alterada com sucesso! Você voltará a página inicial.' });
-                    }
-                });
-            }
-        });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    const { data, error } = await supabase
+        .from('usuario')
+        .select('*')
+        .eq('id_usuario', idUser)
+
+
+    const senhaValida = await bcrypt.compare(senhaAntiga, data[0].senha);
+
+    if (error) {
+        console.log(error);
+        return res.status(400).json({ mensagem: 'Ocorreu uma erro interno! Tente novamente mais tarde.' })
+    };
+
+    if (!senhaValida) {
+        return res.status(400).json({ mensagem: 'Sua senha antiga está errada! Tente novamente.' })
+    }
+
+    const { data: dataU, error: errorU } = await supabase
+        .from('usuario')
+        .update({
+            senha: await bcrypt.hash(senhaAtual, 10)
+        })
+        .eq('id_usuario', idUser)
+
+    if (errorU) {
+        console.log(errorU);
+        return res.status(400).json({ mensagem: 'Ocorreu um erro ao tentar alterar sua senha! Tente novamente mais tarde.' })
+    }
+
+    return res.status(200).json({ mensagem: 'Senha alterada com sucesso! Você voltará a página inicial.' });
 });
 
-app.post('/emailDeletarUsuario', function (req, res) {
-    const idUser = req.session.idUser;
+app.post('/emailDeletarUsuario', verificarLogin, function (req, res) {
+    const idUser = req.usuario.id;
     const { email } = req.body;
 
     const transporter = nodemailer.createTransport({
@@ -541,78 +535,100 @@ app.post('/emailDeletarUsuario', function (req, res) {
 });
 
 app.get('/deletarConta', function (req, res) {
-    if (req.session.loggedin) {
-        const { email, id } = req.query;
+    const { email, id } = req.query;
 
-        res.render('deletarConta', { email, id })
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    res.render('deletarConta', { email, id })
 });
 
-app.post('/deletarConta', function (req, res) {
-    if (req.session.loggedin) {
-        const { id } = req.body;
-        const sql = 'DELETE FROM usuario WHERE id_usuario = ?';
+app.post('/deletarConta', verificarLogin, async function (req, res) {
+    const { email } = req.body;
+    const idUser = req.usuario.id;
 
-        connection.query(sql, id, function (err, results) {
-            if (err) {
-                console.log(err);
-                return res.status(400).json({ mensagem: 'Ocorreu um erro ao tentar excluir sua conta! Tente novamente mais tarde.' })
-            } else {
-                console.log(results);
-                return res.status(200).json({ mensagem: 'Conta removida com sucesso. Você pode fechar essa página.' })
-            }
-        });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    const { data, error } = await supabase
+        .from('usuario')
+        .select('*')
+        .eq('id_usuario', idUser)
+        .eq('email', email)
+
+    if (error) {
+        console.log(error);
+        return res.json({ success: false, mensagem: 'Ocorreu um erro ao tentar excluir sua conta! Tente novamente mais tarde.' });
+
+    }
+
+    if (data.length > 0) {
+        const { data: dataD, error: errorD } = await supabase
+            .from('usuario')
+            .delete()
+            .eq('id_usuario', idUser);
+
+        if (errorD) {
+            console.log(errorD);
+            return res.json({ success: false, mensagem: 'Ocorreu um erro ao tentar excluir sua conta! Tente novamente mais tarde.' });
+        }
+
+        res.clearCookie("token");
+        return res.json({ success: true, mensagem: 'Conta removida com sucesso. Redirecionando... ' });
+    }
+    else {
+        return res.json({ success: false, mensagem: 'Conta inválida! Faça login em SUA conta e tente novamente.' });
+    }
 });
 
-app.post('/emailDelete', function (req, res) {
-    if (req.session.loggedin) {
-        const idProjeto = req.body.idProjeto;
-        const nomeProjeto = req.body.nomeProjeto;
+app.post('/emailDelete', verificarLogin, async function (req, res) {
+    const idProjeto = req.body.idProjeto;
+    const nomeProjeto = req.body.nomeProjeto;
 
-        let emails = [];
-        const sql = 'SELECT email FROM usuario WHERE id_usuario IN (SELECT id_aluno FROM projeto_aluno WHERE id_projeto = ?)';
+    const { data: alunos, error: erro1 } = await supabase
+        .from("projeto_aluno")
+        .select("id_aluno")
+        .eq("id_projeto", idProjeto);
 
-        connection.query(sql, [idProjeto], function (err, results) {
-            if (err) throw err;
-            for (var i = 0; i < results.length; i++) {
-                emails[i] = results[i].email;
-            }
-            emails.forEach(email => {
-                const transporter = nodemailer.createTransport({
-                    service: 'gmail',
-                    auth: {
-                        user: 'admtccmentor@gmail.com',
-                        pass: 'rsaq gcbr domf jbkv'
-                    }
-                });
+    let ids = alunos.map(a => a.id_aluno);
 
-                const mailOptions = {
-                    from: 'TCC Mentor <admtccmentor@gmail.com>',
-                    to: email,
-                    subject: 'Exclusão de Projeto - TCC Mentor',
-                    html: `
-                    <p>Um participante de seu projeto ${nomeProjeto} solicitou a exclusão.</p>
-                    <p>Clique no link abaixo para votar por <strong>excluir o projeto</strong>:</p>
-                    <a href="http://localhost:3006/deletarProjeto?&email=${email}&id=${idProjeto}">Excluir projeto</a>
-                    <p>Ou releve este e-mail caso vote pela permanência do mesmo.</p>
-                `
-                };
+    const { data: emails, error: erro2 } = await supabase
+        .from("usuario")
+        .select("email")
+        .in("id_usuario", ids);
 
-                transporter.sendMail(mailOptions, function (error, info) {
-                    if (error) {
-                        console.error(error);
-                        return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
-                    } else {
-                        return res.json({ success: true, message: 'E-mail para votação enviado com sucesso!' });
-                    }
-                });
-            });
-        });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    console.log(emails);
+
+    // connection.query(sql, [idProjeto], function (err, results) {
+    //     if (err) throw err;
+    //     for (var i = 0; i < results.length; i++) {
+    //         emails[i] = results[i].email;
+    //     }
+    //     emails.forEach(email => {
+    //         const transporter = nodemailer.createTransport({
+    //             service: 'gmail',
+    //             auth: {
+    //                 user: 'admtccmentor@gmail.com',
+    //                 pass: 'rsaq gcbr domf jbkv'
+    //             }
+    //         });
+
+    //         const mailOptions = {
+    //             from: 'TCC Mentor <admtccmentor@gmail.com>',
+    //             to: email,
+    //             subject: 'Exclusão de Projeto - TCC Mentor',
+    //             html: `
+    //                 <p>Um participante de seu projeto ${nomeProjeto} solicitou a exclusão.</p>
+    //                 <p>Clique no link abaixo para votar por <strong>excluir o projeto</strong>:</p>
+    //                 <a href="http://localhost:3006/deletarProjeto?&email=${email}&id=${idProjeto}">Excluir projeto</a>
+    //                 <p>Ou releve este e-mail caso vote pela permanência do mesmo.</p>
+    //             `
+    //         };
+
+    //         transporter.sendMail(mailOptions, function (error, info) {
+    //             if (error) {
+    //                 console.error(error);
+    //                 return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
+    //             } else {
+    //                 return res.json({ success: true, message: 'E-mail para votação enviado com sucesso!' });
+    //             }
+    //         });
+    //     });
+    // });
 })
 
 app.get('/deletarProjeto', function (req, res) {
