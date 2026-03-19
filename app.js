@@ -412,7 +412,7 @@ app.get('/editarProjeto', verificarLogin, async function (req, res) {
 
     const orientador = data[0].orientador;
     const tipo = data[0].tipo;
-    const idAlunos = data[0].idAlunos ? data[0].idAlunos.split(', ') : [];
+    const idAlunos = data[0].idalunos ? data[0].idalunos.split(', ') : [];
     const alunos = data[0].alunos ? data[0].alunos.split(', ') : [];
 
     res.render('editarProjeto', { idProjeto, orientador, idAlunos, alunos, tipo })
@@ -792,136 +792,128 @@ app.post('/conviteProjeto', verificarLogin, async function (req, res) {
     res.json({ success: true, message: 'Você entrou no projeto! Redirecionando para tela inicial...' })
 });
 
-app.post('/removerAluno', function (req, res) {
-    if (req.session.loggedin) {
-        const aluno = req.body.aluno;
-        let sql = 'DELETE FROM projeto_aluno WHERE id_aluno = ?';
+app.post('/removerAluno', verificarLogin, async function (req, res) {
+    const aluno = req.body.aluno;
 
-        connection.query(sql, [aluno], function (err, results) {
-            if (err) {
-                console.log(err);
-                return res.json({ success: false, message: 'Ocorreu um erro ao remover o aluno. Tente novamente mais tarde.' });
-            } else {
-                return res.json({ success: true, message: 'Aluno removido com sucesso!' });
-            }
-        });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    const { error } = await supabase
+        .from('projeto_aluno')
+        .delete()
+        .eq('id_aluno', aluno)
+
+    if (error) {
+        console.log(error);
+        return res.json({ success: false, message: 'Ocorreu um erro ao remover o aluno. Tente novamente mais tarde.' });
+    }
+
+    return res.json({ success: true, message: 'Aluno removido com sucesso!' });
 });
 
 app.get('/mensagens', verificarLogin, async (req, res) => {
-        const idProjeto = req.query.idProjeto;
+    const idProjeto = req.query.idProjeto;
 
-        if (!idProjeto) {
-            return res.status(400).json({ error: 'ID do projeto não informado' });
-        }
+    if (!idProjeto) {
+        return res.status(400).json({ error: 'ID do projeto não informado' });
+    }
 
-        const { data, error } = await supabase.rpc(
-            'buscar_mensagens',
-            { id_projeto_param: idProjeto }
-        );
+    const { data, error } = await supabase.rpc(
+        'buscar_mensagens',
+        { id_projeto_param: idProjeto }
+    );
 
-        if (error) {
-            console.error("Erro ao buscar mensagens:", err);
-            return res.status(500).json({ error: 'Erro no servidor' });
-        }
+    if (error) {
+        console.error("Erro ao buscar mensagens:", err);
+        return res.status(500).json({ error: 'Erro no servidor' });
+    }
 
-        res.json(data);
+    res.json(data);
 });
 
-app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
-    if (req.session.loggedin) {
-        const { idProjeto, remetente, mensagem } = req.body;
-        const idRemetente = req.session.idUser;
-        const arquivo_pdf = req.file ? req.file.filename : null;
+app.post('/mensagens', verificarLogin, upload.single('arquivo_pdf'), async (req, res) => {
+    const { idProjeto, remetente, mensagem } = req.body;
+    const idRemetente = req.session.idUser;
+    const arquivo_pdf = req.file ? req.file.filename : null;
 
-        const { data, error } = await supabase
-            .from('mensagem_chat')
-            .insert({
-                id_projeto: idProjeto,
-                remetente: remetente,
-                id_remetente: idRemetente,
-                mensagem: mensagem,
-                arquivo_pdf: arquivo_pdf
-            });
-
-        try {
-            await new Promise((resolve, reject) => {
-                if (error) return reject(error);
-                resolve(data);
-            });
-
-            if (remetente === 'ORIE' && arquivo_pdf) {
-                const pdfPath = path.join(__dirname, 'public/uploads', arquivo_pdf);
-
-                const formData = new FormData();
-                formData.append("file", fs.createReadStream(pdfPath));
-
-                try {
-                    const respostaIA = await axios.post("http://localhost:8000/analisarPDF", formData, {
-                        headers: formData.getHeaders(),
-                    });
-
-                    const mensagemIA = respostaIA.data.resposta;
-
-                    const { data: dataIA, error: errorIA } = await supabase
-                        .from('mensagem_chat')
-                        .insert({
-                            id_projeto: idProjeto,
-                            remetente: 'IA',
-                            mensagem: mensagemIA,
-                            arquivo_pdf: null
-                        });
-
-                    await new Promise((resolve, reject) => {
-                        if (errorIA) return reject(errorIA);
-                        resolve(dataIA);
-                    });
-
-                } catch (err) {
-                    console.error("Erro ao analisar PDF:", err.response?.data || err.message);
-                }
-            }
-
-            res.json({ sucesso: true });
-
-        } catch (err) {
-            console.error("Erro no envio da mensagem:", err.message);
-            res.status(500).json({ error: 'Erro ao enviar ou processar a mensagem' });
-        }
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
-});
-
-app.post('/analisaMsg', async function (req, res) {
-    if (req.session.loggedin) {
-        const mensagem = req.body.msg;
-        const idProjeto = req.body.idProjeto;
-
-        console.log(mensagem)
-        const url = `https://linhaguga.app.n8n.cloud/webhook/analyse-webhook?message=${mensagem}`;
-
-        const res = await fetch(url, {
-            method: "GET"
+    const { data, error } = await supabase
+        .from('mensagem_chat')
+        .insert({
+            id_projeto: idProjeto,
+            remetente: remetente,
+            id_remetente: idRemetente,
+            mensagem: mensagem,
+            arquivo_pdf: arquivo_pdf
         });
 
-        const data = await res.json();
+    try {
+        await new Promise((resolve, reject) => {
+            if (error) return reject(error);
+            resolve(data);
+        });
 
-        const { data: dataI, error: errorI } = await supabase
-            .from('mensagem_chat')
-            .insert({
-                id_projeto: idProjeto,
-                remetente: 'Tessy AI',
-                mensagem: data.analise
-            })
-            .select();
+        if (remetente === 'ORIE' && arquivo_pdf) {
+            const pdfPath = path.join(__dirname, 'public/uploads', arquivo_pdf);
 
-        if (errorI) {
-            console.log(errorI);
+            const formData = new FormData();
+            formData.append("file", fs.createReadStream(pdfPath));
+
+            try {
+                const respostaIA = await axios.post("http://localhost:8000/analisarPDF", formData, {
+                    headers: formData.getHeaders(),
+                });
+
+                const mensagemIA = respostaIA.data.resposta;
+
+                const { data: dataIA, error: errorIA } = await supabase
+                    .from('mensagem_chat')
+                    .insert({
+                        id_projeto: idProjeto,
+                        remetente: 'IA',
+                        mensagem: mensagemIA,
+                        arquivo_pdf: null
+                    });
+
+                await new Promise((resolve, reject) => {
+                    if (errorIA) return reject(errorIA);
+                    resolve(dataIA);
+                });
+
+            } catch (err) {
+                console.error("Erro ao analisar PDF:", err.response?.data || err.message);
+            }
         }
 
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+        res.json({ sucesso: true });
+
+    } catch (err) {
+        console.error("Erro no envio da mensagem:", err.message);
+        res.status(500).json({ error: 'Erro ao enviar ou processar a mensagem' });
+    }
+});
+
+app.post('/analisaMsg', verificarLogin, async function (req, res) {
+    const mensagem = req.body.msg;
+    const idProjeto = req.body.idProjeto;
+
+    console.log(mensagem)
+    const url = `https://linhaguga.app.n8n.cloud/webhook/analyse-webhook?message=${mensagem}`;
+
+    const response = await fetch(url, {
+        method: "GET"
+    });
+
+    const data = await response.json();
+
+    const { data: dataI, error: errorI } = await supabase
+        .from('mensagem_chat')
+        .insert({
+            id_projeto: idProjeto,
+            remetente: 'Tessy AI',
+            mensagem: data.analise
+        })
+        .select();
+
+    if (errorI) {
+        console.log(errorI);
+    }
 });
 
 app.post('/chatbox', (req, res) => {
@@ -964,23 +956,19 @@ app.post('/chatbox', (req, res) => {
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
-app.get('/adicionarProjeto', function (req, res) {
-    if (req.session.loggedin) {
-        const cargo = req.session.cargo;
-        res.render('adicionarProjeto', { cargo })
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+app.get('/adicionarProjeto', verificarLogin, function (req, res) {
+    const cargo = req.usuario.cargo;
+    res.render('adicionarProjeto', { cargo })
 })
 
 app.post('/adicionarProjeto', function (req, res) {
     const { nome, desc, tipo, orientador } = req.body;
-    console.log(nome)
     const url = nome.toLowerCase().replace(/\s+/g, '-');
 
     if (req.session.cargo === 'ALUN')
         orientador = req.body
     else
-        orientador = req.session.idUser
+        orientador = req.usuario.id
 
     const sql = "INSERT INTO projeto (nm_projeto, dc_projeto, tp_projeto, id_orientador, url) SELECT ?, ?, ?, id_usuario, ? FROM usuario WHERE nm_usuario = ?";
     let motivo = '';
