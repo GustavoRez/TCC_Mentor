@@ -14,6 +14,8 @@ const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 
+const baseUrl = process.env.BASE_URL;
+
 app.use(cookieParser())
 
 app.use(express.json());
@@ -166,7 +168,7 @@ app.post('/esqueciSenha', async function (req, res) {
         html: `
                     <p>Você solicitou a recuperação de senha.</p>
                     <p>Clique no link abaixo para redefinir sua senha:</p>
-                    <a href="http://localhost:3006/redefinirSenha?token=${token}&email=${email}">Redefinir Senha</a>
+                    <a href="${baseUrl}/redefinirSenha?token=${token}&email=${email}">Redefinir Senha</a>
                     <p>Este link é válido por 1 hora.</p>
                 `
     };
@@ -253,12 +255,10 @@ app.post('/cadastro', async function (req, res) {
                     token: token
                 }
             ])
-            .select();
         if (error) {
             console.log(error);
             return res.json({ success: false, message: 'Erro ao criar usuario.' });
         } else {
-            console.log(data);
             let msg = 'Perfil criado! Faça o login para continuar. ';
 
             const transporter = nodemailer.createTransport({
@@ -276,7 +276,7 @@ app.post('/cadastro', async function (req, res) {
                 html: `
                             <p>Bem-vindo! 🎉</p>
                             <p>Para concluir seu cadastro, confirme seu e-mail clicando no link abaixo:</p>
-                            <a href="http://localhost:3006/confirmarEmail?token=${token}&email=${email}">Confirmar E-mail</a>
+                            <a href="${baseUrl}/confirmarEmail?token=${token}&email=${email}">Confirmar E-mail</a>
                             `
             };
 
@@ -304,7 +304,6 @@ app.get('/confirmarEmail', async function (req, res) {
             }
         )
         .eq('token', token)
-        .select();
 
     if (error) {
         console.log(error);
@@ -518,7 +517,7 @@ app.post('/emailDeletarUsuario', verificarLogin, function (req, res) {
         html: `
             <p>Você solicitou a exclusão de sua conta.</p>
             <p>Clique no link abaixo para <strong>apagar ela</strong>:</p>
-            <a href="http://localhost:3006/deletarConta?&email=${email}&id=${idUser}">Excluir Conta</a>
+            <a href="${baseUrl}/deletarConta?&email=${email}&id=${idUser}">Excluir Conta</a>
             <p>Caso não reconheça essa solicitação, considere alterar sua senha.</p>
             <p>Uma exclusão de conta é uma ação irreversível!</p>
             `
@@ -586,193 +585,211 @@ app.post('/emailDelete', verificarLogin, async function (req, res) {
 
     let ids = alunos.map(a => a.id_aluno);
 
+    if (erro1) { return res.json({ success: false, message: 'Erro ao achar projeto. Tente novamente mais tarde!' }) }
+
     const { data: emails, error: erro2 } = await supabase
         .from("usuario")
         .select("email")
         .in("id_usuario", ids);
 
-    console.log(emails);
+    if (erro2) { return res.json({ success: false, message: 'Erro ao buscar participantes do projeto. Tente novamente mais tarde!' }) }
 
-    // connection.query(sql, [idProjeto], function (err, results) {
-    //     if (err) throw err;
-    //     for (var i = 0; i < results.length; i++) {
-    //         emails[i] = results[i].email;
-    //     }
-    //     emails.forEach(email => {
-    //         const transporter = nodemailer.createTransport({
-    //             service: 'gmail',
-    //             auth: {
-    //                 user: 'admtccmentor@gmail.com',
-    //                 pass: 'rsaq gcbr domf jbkv'
-    //             }
-    //         });
-
-    //         const mailOptions = {
-    //             from: 'TCC Mentor <admtccmentor@gmail.com>',
-    //             to: email,
-    //             subject: 'Exclusão de Projeto - TCC Mentor',
-    //             html: `
-    //                 <p>Um participante de seu projeto ${nomeProjeto} solicitou a exclusão.</p>
-    //                 <p>Clique no link abaixo para votar por <strong>excluir o projeto</strong>:</p>
-    //                 <a href="http://localhost:3006/deletarProjeto?&email=${email}&id=${idProjeto}">Excluir projeto</a>
-    //                 <p>Ou releve este e-mail caso vote pela permanência do mesmo.</p>
-    //             `
-    //         };
-
-    //         transporter.sendMail(mailOptions, function (error, info) {
-    //             if (error) {
-    //                 console.error(error);
-    //                 return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
-    //             } else {
-    //                 return res.json({ success: true, message: 'E-mail para votação enviado com sucesso!' });
-    //             }
-    //         });
-    //     });
-    // });
-})
+    emails.forEach(email => {
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'admtccmentor@gmail.com',
+                pass: 'rsaq gcbr domf jbkv'
+            }
+        })
+        const mailOptions = {
+            from: 'TCC Mentor <admtccmentor@gmail.com>',
+            to: email.email,
+            subject: 'Exclusão de Projeto - TCC Mentor',
+            html: `
+                     <p>Um participante de seu projeto ${nomeProjeto} solicitou a exclusão.</p>
+                     <p>Clique no link abaixo para votar por <strong>excluir o projeto</strong>:</p>
+                     <a href="${baseUrl}/deletarProjeto?&email=${email.email}&id=${idProjeto}">Excluir projeto</a>
+                     <p>Ou releve este e-mail caso vote pela permanência do mesmo.</p>
+                 `
+        }
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.error(error);
+                return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
+            } else {
+                return res.json({ success: true, message: 'E-mail para votação enviado com sucesso!' });
+            }
+        });
+    });
+});
 
 app.get('/deletarProjeto', function (req, res) {
-    if (req.session.loggedin) {
-        const { email, id } = req.query;
+    const { email, id } = req.query;
 
-        res.render('deletarProjeto', { email, id });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    res.render('deletarProjeto', { email, id });
 });
 
-app.post('/deletarProjeto', function (req, res) {
-    if (req.session.loggedin) {
-        const id = req.body.id;
-        const sql = 'UPDATE projeto SET voto_deletar = voto_deletar + 1 WHERE id_projeto = ?';
+app.post('/deletarProjeto', verificarLogin, async function (req, res) {
+    const id = req.body.id;
+    const { data, error } = await supabase
+        .from('projeto_aluno')
+        .select('voto_delete')
+        .eq('id_aluno', req.usuario.id)
 
-        connection.query(sql, [id], function (err, results) {
-            if (err) {
-                console.log(err);
-                res.json({ success: false, message: 'Ocorreu um erro ao registrar seu voto! Tente novamente mais tarde.' });
-            } else {
-                connection.query('SELECT COUNT(id_aluno) contagem, voto_deletar FROM projeto_aluno NATURAL JOIN projeto WHERE id_projeto = ?', [id], function (erro, resultado) {
-                    if (erro) throw erro;
-                    if (((resultado[0].contagem / 2) >= resultado[0].voto_deletar) || resultado[0].contagem == 1) {
-                        connection.query('DELETE FROM projeto WHERE id_projeto = ?', [id], function (erro2, resultado2) {
-                            if (erro2) {
-                                console.log(erro2);
-                                res.json({ success: false, message: 'Erro ao deletar projeto. Contate o Suporte!' });
-                            } else {
-                                console.log(resultado2);
-                                res.json({ success: true, message: 'Seu projeto foi deletado com sucesso!' });
-                            }
-                        })
-                    } else {
-                        console.log(resultado);
-                        res.json({ success: true, message: 'Seu voto foi computado. Caso mais da metade dos participantes concordem, seu projeto será excluido!' })
-                    }
-                })
+
+    if (!data[0].voto_delete) {
+        const { error: errorU } = await supabase.rpc("incrementar_voto", {
+            id_projeto_param: id,
+            id_aluno_param: req.usuario.id
+        });
+
+        if (errorU) {
+            console.log(errorU);
+            res.json({ success: false, message: 'Ocorreu um erro ao registrar seu voto! Tente novamente mais tarde.' });
+        }
+    } else {
+        res.json({ success: false, message: 'Seu voto já foi computado. Aguarde o voto de seus companheiros.' });
+    }
+
+    const { data: dataS, error: errorS } = await supabase
+        .rpc("contar_alunos_projeto", { id_projeto_param: id });
+
+    if (errorS) {
+        console.log(errorS);
+    }
+
+    console.log(dataS[0].contagem / 2)
+    console.log(dataS[0].voto_deletar)
+
+    if (dataS[0].voto_deletar > dataS[0].contagem / 2) {
+        const { error: errorD } = await supabase
+            .from(projeto)
+            .delete()
+            .eq('id_projeto', id)
+
+        if (errorD) {
+            console.log(errorD);
+            res.json({ success: false, message: 'Erro ao deletar projeto! Tente novamente mais tarde.' });
+        }
+
+        res.json({ success: true, message: 'Seu projeto foi deletado com sucesso!' });
+    }
+});
+
+app.post('/adicionarAluno', verificarLogin, async function (req, res) {
+    const emails = req.body.email;
+    const idProjeto = req.body.idProjeto;
+
+    const { data: dataEmail, error: errorEmail } = await supabase
+        .from('usuario')
+        .select('*')
+        .in('email', emails)
+
+    if (errorEmail) throw errorEmail;
+
+    if (dataEmail.length == 0) {
+        return res.json({ success: false, message: 'E-mail(s) sem cadastro! Solicite o(s) a criar uma conta!' });
+    }
+
+    const encontrados = dataEmail.map(user => user.email);
+    const id = dataEmail.map(user => user.id_usuario);
+
+    const { data: dataProjeto, error: errorProjeto } = await supabase
+        .from("usuario")
+        .select('*, projeto_aluno (*)')
+        .eq("id_usuario", id);
+
+    if (errorProjeto) throw errorProjeto;
+
+    if (dataProjeto[0].projeto_aluno.length > 0) {
+        const nome = dataProjeto[0].nm_usuario;
+        return res.json({ success: false, message: `Aluno ${nome} já possui um projeto em criado!` })
+    }
+
+    encontrados.forEach(email => {
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'admtccmentor@gmail.com',
+                pass: 'rsaq gcbr domf jbkv'
             }
         });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
-});
-
-app.post('/adicionarAluno', function (req, res) {
-    if (req.session.loggedin) {
-        const emails = req.body.email;
-        const idProjeto = req.body.idProjeto;
-
-        const sql = "SELECT * FROM usuario WHERE email IN (?)";
-
-        connection.query(sql, [emails], function (err, results) {
-            if (err) throw err;
-            if (results.length < 1) {
-                return res.json({ success: false, message: 'E-mail(s) sem cadastro! Solicite o(s) a criar uma conta!' });
-            } else {
-                const encontrados = results.map(user => user.email);
-                const id = results.map(user => user.id_usuario);
-                connection.query('SELECT * FROM usuario NATURAL JOIN projeto_aluno WHERE id_aluno IN (?)',
-                    [id], function (err2, results2) {
-                        if (err2) throw err2;
-                        if (results2.length) {
-                            const nome = results2[0].nm_usuario;
-                            return res.json({ success: false, message: `Aluno ${nome} já possui um projeto em criado!` })
-                        } else {
-                            encontrados.forEach(email => {
-                                const transporter = nodemailer.createTransport({
-                                    service: 'gmail',
-                                    auth: {
-                                        user: 'admtccmentor@gmail.com',
-                                        pass: 'rsaq gcbr domf jbkv'
-                                    }
-                                });
-                                const mailOptions = {
-                                    from: 'TCC Mentor <admtccmentor@gmail.com>',
-                                    to: encontrados,
-                                    subject: 'Convite Para Projeto - TCC Mentor',
-                                    html: `
-                    <p>${req.session.nome} te convidou para entrar em um projeto!</p>
+        const mailOptions = {
+            from: 'TCC Mentor <admtccmentor@gmail.com>',
+            to: encontrados,
+            subject: 'Convite Para Projeto - TCC Mentor',
+            html: `
+                    <p>${req.usuario.nome} te convidou para entrar em um projeto!</p>
                     <p>Clique no link abaixo para ver o convite:</p>
-                    <a href="http://localhost:3006/conviteProjeto?email=${email}&id=${idProjeto}">Entre no meu grupo!</a>`
-                                };
+                    <a href="${baseUrl}/conviteProjeto?email=${email}&id=${idProjeto}">Entre no meu grupo!</a>`
+        };
 
-                                transporter.sendMail(mailOptions, function (error, info) {
-                                    if (error) {
-                                        console.error(error);
-                                        return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
-                                    } else {
-                                        return res.json({ success: true, message: 'Solicitação enviada com sucesso!' });
-                                    }
-                                });
-                            });
-                        }
-                    });
-            }
-        });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
-});
-
-app.get('/conviteProjeto', function (req, res) {
-    if (req.session.loggedin) {
-        const emails = req.query.email;
-        const id = req.query.id;
-        const sql = 'SELECT nm_projeto, dc_projeto, tp_projeto FROM projeto WHERE id_projeto = ?';
-
-        connection.query(sql, [id], function (err, results) {
-            const nomeP = results[0].nm_projeto;
-            const descP = results[0].dc_projeto;
-            const tipoP = results[0].tp_projeto;
-
-            res.render('conviteProjeto', { emails, id, nomeP, descP, tipoP });
-        });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
-});
-
-app.post('/conviteProjeto', function (req, res) {
-    if (req.session.loggedin) {
-        const { email, id } = req.body;
-        const sql = 'INSERT INTO projeto_aluno (id_projeto, id_aluno) VALUES (?, (SELECT id_usuario FROM usuario WHERE email = ?))';
-
-        connection.query('SELECT * FROM projeto_aluno WHERE id_aluno = (SELECT id_usuario FROM usuario WHERE email = ?)', [email], function (erro, resultado) {
-            if (erro) {
-                console.log(erro);
-                res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' });
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.error(error);
+                return res.json({ success: false, message: 'Erro ao enviar o e-mail.' });
             } else {
-                if (resultado.length !== 0) {
-                    res.json({ success: false, message: 'Essa conta já possui um projeto ativo. Não foi possível entrar!' })
-                } else {
-                    connection.query(sql, [id, email], function (err, results) {
-                        if (err) {
-                            console.log(err);
-                            res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' })
-                        } else {
-                            console.log(results);
-                            res.json({ success: true, message: 'Você entrou no projeto! Faça login para continuar.' })
-                        }
-                    })
-                }
+                return res.json({ success: true, message: 'Solicitação enviada com sucesso!' });
             }
         });
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
+    });
+});
+
+app.get('/conviteProjeto', async function (req, res) {
+    const emails = req.query.email;
+    const id = req.query.id;
+
+    const { data, error } = await supabase
+        .from('projeto')
+        .select('*')
+        .eq('id_projeto', id);
+
+    if (error) throw error;
+    const nomeP = data[0].nm_projeto;
+    const descP = data[0].dc_projeto;
+    const tipoP = data[0].tp_projeto;
+
+    res.render('conviteProjeto', { emails, id, nomeP, descP, tipoP });
+});
+
+app.post('/conviteProjeto', verificarLogin, async function (req, res) {
+    const { email, id } = req.body;
+
+    const { data: dataS, error: errorS } = await supabase
+        .from('usuario')
+        .select('id_usuario')
+        .eq('email', email);
+
+    if (errorS) {
+        console.log(err);
+        res.json({ success: false, message: 'Ocorreu um erro ao verificar aluno! Tente novamente mais tarde.' })
+    }
+
+    const { data, error } = await supabase
+        .from('projeto_aluno')
+        .select('*')
+        .eq('id_aluno', dataS[0].id_usuario);
+
+    if (error) throw error;
+
+    if (data.length !== 0)
+        res.json({ success: false, message: 'Essa conta já possui um projeto ativo. Não foi possível entrar!' })
+
+    const { error: errorI } = await supabase
+        .from('projeto_aluno')
+        .insert({
+            id_projeto: id,
+            id_aluno: dataS[0].id_usuario
+        })
+        .eq('email', email);
+
+    if (errorI) {
+        console.log(err);
+        res.json({ success: false, message: 'Ocorreu um erro ao entrar no projeto! Tente novamente mais tarde.' })
+    }
+
+    res.json({ success: true, message: 'Você entrou no projeto! Redirecionando para tela inicial...' })
 });
 
 app.post('/removerAluno', function (req, res) {
