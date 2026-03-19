@@ -809,8 +809,7 @@ app.post('/removerAluno', function (req, res) {
         res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
-app.get('/mensagens', async (req, res) => {
-    if (req.session.loggedin) {
+app.get('/mensagens', verificarLogin, async (req, res) => {
         const idProjeto = req.query.idProjeto;
 
         if (!idProjeto) {
@@ -828,9 +827,6 @@ app.get('/mensagens', async (req, res) => {
         }
 
         res.json(data);
-
-    } else
-        res.sendFile(path.join(__dirname + '/views/not_logged.html'));
 });
 
 app.post('/mensagens', upload.single('arquivo_pdf'), async (req, res) => {
