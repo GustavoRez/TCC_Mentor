@@ -961,45 +961,65 @@ app.get('/adicionarProjeto', verificarLogin, function (req, res) {
     res.render('adicionarProjeto', { cargo })
 })
 
-app.post('/adicionarProjeto', function (req, res) {
-    const { nome, desc, tipo, orientador } = req.body;
+app.post('/adicionarProjeto', verificarLogin, async function (req, res) {
+    const { nome, desc, tipo } = req.body;
+    var orientador;
     const url = nome.toLowerCase().replace(/\s+/g, '-');
 
-    if (req.session.cargo === 'ALUN')
-        orientador = req.body
+    if (req.usuario.cargo === 'ALUN') {
+        const { data: dataOri, error: errorOri } = await supabase
+            .from('usuario')
+            .select('id_usuario')
+            .eq('nm_usuario', req.body.orientador)
+
+        if (errorOri) return res.json({ success: false, message: 'Erro interno. Tente novamente mais tarde.' });
+        if (dataOri.length == 0) return res.json({ success: false, message: 'Erro ao criar projeto: Orientador não registrado.' });
+        orientador = dataOri[0].id_usuario;
+    }
     else
-        orientador = req.usuario.id
+        orientador = req.usuario.id;
 
-    const sql = "INSERT INTO projeto (nm_projeto, dc_projeto, tp_projeto, id_orientador, url) SELECT ?, ?, ?, id_usuario, ? FROM usuario WHERE nm_usuario = ?";
-    let motivo = '';
+    const { data, error } = await supabase
+        .from('projeto')
+        .insert({
+            nm_projeto: nome,
+            dc_projeto: desc,
+            tp_projeto: tipo,
+            id_orientador: orientador,
+            url: url
+        })
+    if (error) {
+        console.log(error);
+        if (error.message = 'duplicate key value violates unique constraint "projeto_nm_projeto_key"')
+            return res.json({ success: false, message: 'Erro ao criar projeto. Nome de projeto já existente!' });
 
-    connection.query(sql, [nome, desc, tipo, url, orientador], function (err, results) {
-        if (err) {
-            console.log(err);
-            if (err = "Error: ER_DUP_ENTRY: Duplicate entry 'TCC mentor' for key 'nm_projeto'") {
-                motivo = ' Nome de projeto já existente!';
-            }
-            return res.json({ success: false, message: 'Erro ao criar projeto.' + motivo });
+    }
 
-        } else if (results.affectedRows == 0) {
-            return res.json({ success: false, message: 'Erro ao criar projeto: Orientador não registrado.' });
+    if (req.usuario.cargo === 'ALUN') {
+        const { data: dataProj, error: errorProj } = await supabase
+        .from('projeto')
+        .select('id_projeto')
+        .eq('nm_projeto', nome)
 
-        } else {
-            console.log(results);
-            const idProjeto = results.insertId;
-            const sqlAluno = "INSERT INTO projeto_aluno (id_projeto, id_aluno) SELECT '?', id_usuario FROM usuario WHERE nm_usuario = ?";
-
-            connection.query(sqlAluno, [idProjeto, req.session.nome], function (err2, results2) {
-                if (err2) {
-                    console.log("Aluno err: ", err2);
-                    return res.json({ success: false, message: 'Erro ao criar projeto.' });
-                } else {
-                    console.log("Aluno results: ", results2);
-                    return res.json({ success: true, message: 'Projeto criado com sucesso!' })
-                }
-            })
+        if (errorProj) {
+            console.log(errorProj)
+            return res.json({success: false, message: "Erro interno. Tente novamente mais tarde."})
         }
-    })
+
+        const { data: dataS, error: errorS } = await supabase
+            .from('projeto_aluno')
+            .insert({
+                id_projeto: dataProj[0].id_projeto,
+                id_aluno: req.usuario.id
+            })
+
+        if (errorS) {
+            return res.json({ success: false, message: 'Erro ao criar projeto.' });
+        } else {
+            return res.json({ success: true, message: 'Projeto criado com sucesso!' })
+        }
+    }
+
 });
 
 if (require.main === module) {

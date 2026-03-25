@@ -103,6 +103,9 @@
                     if (data.success) {
                         messageDiv.style.color = 'rgb(0, 255, 0)';
                         messageDiv.innerHTML = `<p><strong>${data.message}</strong></p>`;
+                        setTimeout(() => {
+                                window.location.href = ('/home');
+                            }, 2000)
 
                     } else {
                         messageDiv.style.color = 'red';
