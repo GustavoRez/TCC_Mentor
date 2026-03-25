@@ -659,12 +659,9 @@ app.post('/deletarProjeto', verificarLogin, async function (req, res) {
         console.log(errorS);
     }
 
-    console.log(dataS[0].contagem / 2)
-    console.log(dataS[0].voto_deletar)
-
     if (dataS[0].voto_deletar > dataS[0].contagem / 2) {
         const { error: errorD } = await supabase
-            .from(projeto)
+            .from('projeto')
             .delete()
             .eq('id_projeto', id)
 
