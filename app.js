@@ -890,8 +890,7 @@ app.post('/analisaMsg', verificarLogin, async function (req, res) {
     const mensagem = req.body.msg;
     const idProjeto = req.body.idProjeto;
 
-    console.log(mensagem)
-    const url = `https://linhaguga.app.n8n.cloud/webhook/analyse-webhook?message=${mensagem}`;
+    const url = `http://localhost:5678/webhook/analyseMessage?message=${mensagem}`;
 
     const response = await fetch(url, {
         method: "GET"
@@ -994,13 +993,13 @@ app.post('/adicionarProjeto', verificarLogin, async function (req, res) {
 
     if (req.usuario.cargo === 'ALUN') {
         const { data: dataProj, error: errorProj } = await supabase
-        .from('projeto')
-        .select('id_projeto')
-        .eq('nm_projeto', nome)
+            .from('projeto')
+            .select('id_projeto')
+            .eq('nm_projeto', nome)
 
         if (errorProj) {
             console.log(errorProj)
-            return res.json({success: false, message: "Erro interno. Tente novamente mais tarde."})
+            return res.json({ success: false, message: "Erro interno. Tente novamente mais tarde." })
         }
 
         const { data: dataS, error: errorS } = await supabase
