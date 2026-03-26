@@ -827,7 +827,7 @@ app.get('/mensagens', verificarLogin, async (req, res) => {
 
 app.post('/mensagens', verificarLogin, upload.single('arquivo_pdf'), async (req, res) => {
     const { idProjeto, remetente, mensagem } = req.body;
-    const idRemetente = req.session.idUser;
+    const idRemetente = req.usuario.id;
     const arquivo_pdf = req.file ? req.file.filename : null;
 
     const { data, error } = await supabase
