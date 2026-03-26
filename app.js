@@ -890,10 +890,14 @@ app.post('/analisaMsg', verificarLogin, async function (req, res) {
     const mensagem = req.body.msg;
     const idProjeto = req.body.idProjeto;
 
-    const url = `http://localhost:5678/webhook/analyseMessage?message=${mensagem}`;
+    const url = `https://my-n8n-xnnf.onrender.com/webhook/analyseMessage?message=${mensagem}`;
 
     const response = await fetch(url, {
-        method: "GET"
+        method: "GET",
+        headers: {
+            'X-N8N-API-KEY': process.env.N8N_API_KEY,
+            'Content-Type': 'application/json'
+        }
     });
 
     const data = await response.json();
