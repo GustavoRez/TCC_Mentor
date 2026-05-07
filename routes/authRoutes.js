@@ -13,4 +13,6 @@ router.patch("/confirmEmail/:confirmId", AuthController.confirmEmail);
 router.post("/logout", AuthController.logout);
 router.get("/home", auth, AuthController.home);
 router.get("/project/:projectId", auth, AuthController.project);
+router.get("/editProject/:projectId", auth, AuthController.editProject);
+router.post("/addParticipant/:projectId", auth, AuthController.addParticipant);
 module.exports = router;

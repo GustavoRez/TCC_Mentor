@@ -1,6 +1,7 @@
 const { supabase } = require("../supabaseClient");
 
 const findByEmail = async (email) => {
+    console.log('db', email)
     const { data, error } = await supabase
         .from("usuario")
         .select("*")
@@ -13,6 +14,31 @@ const findByEmail = async (email) => {
     }
 
     return data;
+};
+
+const findByEmailArray = async (emails) => {
+    const { data, error } = await supabase
+        .from("usuario")
+        .select("*")
+        .in("email", emails);
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error finding users by email.");
+    }
+
+    // emails encontrados no banco
+    const foundEmails = data.map(user => user.email);
+
+    // emails que não existem
+    const notFoundEmails = emails.filter(
+        email => !foundEmails.includes(email)
+    );
+
+    return {
+        users: data,
+        notFoundEmails
+    };
 };
 
 const saveRefreshToken = async (userId, refreshToken) => {
@@ -45,12 +71,12 @@ const findByRefreshToken = async (refreshToken) => {
     return data;
 };
 
-const findById = async (id) => {
+const findByIds = async (ids) => {
     const { data, error } = await supabase
         .from("usuario")
         .select("*")
-        .eq("id_usuario", id)
-        .maybeSingle();
+        .in("id_usuario", ids);
+
 
     if (error) {
         console.log(error);
@@ -185,9 +211,8 @@ const checkUserProjectParticipation = async (userId, projectId) => {
     const { data, error } = await supabase
         .from('projeto_aluno')
         .select('*')
-        .eq('id_aluno', userId)
+        .in('id_aluno', userId)
         .eq('id_projeto', projectId)
-        .maybeSingle();
 
     if (error) {
         console.log(error);
@@ -197,12 +222,25 @@ const checkUserProjectParticipation = async (userId, projectId) => {
     return data;
 };
 
+const editProject = async (projectId) => {
+  const { data, error } = await supabase
+      .rpc('editar_projeto', { id_projeto_param: projectId });
+
+  if (error) {
+    console.log(error);
+    throw new Error("Error fetching project data for editing.");
+  }
+
+  return data;
+};
+
 module.exports = {
     findByEmail,
+    findByEmailArray,
     findByToken,
     findByRefreshToken,
     saveRefreshToken,
-    findById,
+    findByIds,
     createUser,
     confirmEmail,
     updatePasswordToken,
@@ -211,5 +249,6 @@ module.exports = {
     findHomeDataOrientador,
     findProjectById,
     findMessagesByProjectId,
-    checkUserProjectParticipation
+    checkUserProjectParticipation,
+    editProject
 };

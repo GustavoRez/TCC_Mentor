@@ -106,6 +106,26 @@ const project = async (req, res, next) => {
   }
 };
 
+const editProject = async (req, res, next) => {
+  try {
+    const projectId = req.params.projectId.split('-')[0];
+    const result = await AuthService.editProject(req.user, projectId);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const addParticipant = async (req, res, next) => {
+  try {
+    const projectId = req.params.projectId.split('-')[0];
+    const result = await AuthService.addParticipant(req.body, req.user, projectId);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   refresh,
   login,
@@ -115,5 +135,7 @@ module.exports = {
   resetPassword,
   logout,
   home,
-  project
+  project,
+  editProject,
+  addParticipant
 };

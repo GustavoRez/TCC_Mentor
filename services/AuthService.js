@@ -209,7 +209,7 @@ const home = async (user) => {
   };
 
   const homeData = {
-    id_projeto: [],
+    idProjeto: [],
     nomeProjetos: [],
     tipos: [],
     orientadores: [],
@@ -219,7 +219,7 @@ const home = async (user) => {
   const projects = data.cargo === 'ALUN' ? await UserRepository.findHomeDataAluno(user.id) : await UserRepository.findHomeDataOrientador(user.id);
 
   projects.forEach(proj => {
-    homeData.id_projeto.push(proj.id_projeto);
+    homeData.idProjeto.push(proj.id_projeto);
     homeData.nomeProjetos.push(proj.nm_projeto);
     homeData.tipos.push(proj.tp_projeto);
     homeData.orientadores.push(proj.orientador);
@@ -230,7 +230,7 @@ const home = async (user) => {
 }
 
 const project = async (user, projectId) => {
-  const isParticipant = await UserRepository.checkUserProjectParticipation(user.id, projectId);
+  const isParticipant = await UserRepository.checkUserProjectParticipation([user.id], projectId);
 
   if (!isParticipant) {
     throw new AppError("Project not found or access denied", 403);
@@ -239,28 +239,28 @@ const project = async (user, projectId) => {
   const cargo = user.cargo;
 
   const projectData = {
-    id_projeto: null,
-    nm_projeto: null,
-    dc_projeto: null,
-    tp_projeto: null,
+    idProjeto: null,
+    nomeProjeto: null,
+    descricaoProjeto: null,
+    tipoProjeto: null,
     orientador: null,
-    alunos: []
+    alunos: null
   };
 
   const messageData = {
     mensagem: [],
     remetente: [],
-    data_envio: [],
-    cargo_remetente: []
+    dataEnvio: [],
+    cargoRemetente: []
   }
 
   const project = await UserRepository.findProjectById(projectId);
 
   if (project && project.length > 0) {
-    projectData.id_projeto = project[0].id_projeto;
-    projectData.nm_projeto = project[0].nm_projeto;
-    projectData.dc_projeto = project[0].dc_projeto;
-    projectData.tp_projeto = project[0].tp_projeto;
+    projectData.idProjeto = project[0].id_projeto;
+    projectData.nomeProjeto = project[0].nm_projeto;
+    projectData.descricaoProjeto = project[0].dc_projeto;
+    projectData.tipoProjeto = project[0].tp_projeto;
     projectData.orientador = project[0].orientador;
     projectData.alunos = project[0].alunos;
   }
@@ -268,17 +268,97 @@ const project = async (user, projectId) => {
   const messages = await UserRepository.findMessagesByProjectId(projectId);
 
   const messagesData = messages
-  .filter(msg => msg.mensagem)
-  .map(msg => ({
-    mensagem: msg.mensagem,
-    remetente: msg.nm_remetente,
-    data_envio: msg.data_envio,
-    cargo_remetente: msg.cargo_remetente
-  }));
+    .filter(msg => msg.mensagem)
+    .map(msg => ({
+      mensagem: msg.mensagem,
+      remetente: msg.nm_remetente,
+      dataEnvio: msg.data_envio,
+      cargoRemetente: msg.cargo_remetente
+    }));
 
 
   return { cargo, projectData, messagesData };
 }
+
+const editProject = async (user, projectId) => {
+  const isParticipant = await UserRepository.checkUserProjectParticipation([user.id], projectId);
+
+  if (!isParticipant) {
+    throw new AppError("Project not found or access denied", 403);
+  }
+
+  const editProjectData = {
+    tp_projeto: null,
+    orientador: null,
+    id_alunos: null,
+    nm_alunos: null
+  };
+
+  const project = await UserRepository.editProject(projectId);
+
+  if (project && project.length > 0) {
+    editProjectData.tp_projeto = project[0].tipo;
+    editProjectData.orientador = project[0].orientador;
+    editProjectData.id_alunos = project[0].idalunos || null;
+    editProjectData.nm_alunos = project[0].alunos || null;
+  }
+
+  return { editProjectData };
+};
+
+const addParticipant = async ({ email }, user, projectId) => {
+  const isParticipant = await UserRepository.checkUserProjectParticipation([user.id], projectId);
+
+  if (!isParticipant) {
+    throw new AppError("Project not found or access denied", 403);
+  }
+  const participant = await UserRepository.findByEmailArray(email);
+
+  if (!participant.users.length) {
+    throw new AppError("User(s) with this email not found!", 404);
+  }
+
+  const ids = participant.users.map(u => u.id_usuario);
+
+  const participantsInProjects = await UserRepository.checkUserProjectParticipation(ids, projectId);
+
+  const existingParticipants = participant.users
+    .filter(user =>
+      participantsInProjects.some(
+        p => p.id_aluno === user.id_usuario
+      )
+    )
+    .map(user => user.email);
+
+  if (existingParticipants.length === participant.users.length) {
+    throw new AppError("All users with this email are already participants in a project!", 409);
+  }
+
+  const redisInvite = crypto.randomUUID();
+  await RedisClient.set(
+    `invite:${redisInvite}`,
+    JSON.stringify({ email, projectId }),
+    { EX: 3600 }
+  );
+
+  try {
+    await EmailService.sendEmail({
+      to: email,
+      subject: "Project Invitation - TCC Mentor",
+      html: `<p>${user.nome} has invited you to join a project!</p>
+      <p>Click the link below to confirm your email:</p>
+    <p><a href="${baseUrl}/joinProject/${redisInvite}">Accept Invitation</a></p>`
+    }
+    );
+
+  } catch (err) {
+    console.log("Error sending email:", err.message);
+    throw new AppError("Error sending invitation email.", 201);
+  }
+
+  return { message: "Invitation sent successfully.", notFound: participant.notFoundEmails, existingParticipants };
+};
+
 
 module.exports = {
   refresh,
@@ -289,5 +369,7 @@ module.exports = {
   resetPassword,
   logout,
   home,
-  project
+  project,
+  editProject,
+  addParticipant
 };
