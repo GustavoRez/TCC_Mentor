@@ -1,7 +1,6 @@
 const { supabase } = require("../supabaseClient");
 
 const findByEmail = async (email) => {
-    console.log('db', email)
     const { data, error } = await supabase
         .from("usuario")
         .select("*")
@@ -223,15 +222,31 @@ const checkUserProjectParticipation = async (userId, projectId) => {
 };
 
 const editProject = async (projectId) => {
-  const { data, error } = await supabase
-      .rpc('editar_projeto', { id_projeto_param: projectId });
+    const { data, error } = await supabase
+        .rpc('editar_projeto', { id_projeto_param: projectId });
 
-  if (error) {
-    console.log(error);
-    throw new Error("Error fetching project data for editing.");
-  }
+    if (error) {
+        console.log(error);
+        throw new Error("Error fetching project data for editing.");
+    }
 
-  return data;
+    return data;
+};
+
+const addParticipantToProject = async (userId, projectId) => {
+    const { error } = await supabase
+    .from('projeto_aluno')
+    .insert([{
+        id_aluno: userId,
+        id_projeto: projectId
+    }]);
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error fetching project data for editing.");
+    }
+
+    return 0;
 };
 
 module.exports = {
@@ -250,5 +265,6 @@ module.exports = {
     findProjectById,
     findMessagesByProjectId,
     checkUserProjectParticipation,
-    editProject
+    editProject,
+    addParticipantToProject
 };

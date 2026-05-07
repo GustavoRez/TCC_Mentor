@@ -1,3 +1,4 @@
+const { join } = require("node:path");
 const AuthService = require("../services/AuthService");
 
 const refresh = async (req, res, next) => {
@@ -126,6 +127,28 @@ const addParticipant = async (req, res, next) => {
   }
 };
 
+const joinProjectScreen = async (req, res, next) => {
+  try {
+    const { inviteId } = req.params;
+    
+    const result = await AuthService.joinProjectScreen(req.user, inviteId);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const joinProject = async (req, res, next) => {
+  try {
+    const { inviteId } = req.params;
+
+    const result = await AuthService.joinProject(req.user, inviteId);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   refresh,
   login,
@@ -137,5 +160,7 @@ module.exports = {
   home,
   project,
   editProject,
-  addParticipant
+  addParticipant,
+  joinProjectScreen,
+  joinProject
 };

@@ -15,4 +15,6 @@ router.get("/home", auth, AuthController.home);
 router.get("/project/:projectId", auth, AuthController.project);
 router.get("/editProject/:projectId", auth, AuthController.editProject);
 router.post("/addParticipant/:projectId", auth, AuthController.addParticipant);
+router.get("/project/:inviteId/join", auth, AuthController.joinProjectScreen);
+router.patch("/project/:inviteId/join", auth, AuthController.joinProject);
 module.exports = router;

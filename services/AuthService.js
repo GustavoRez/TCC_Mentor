@@ -306,13 +306,14 @@ const editProject = async (user, projectId) => {
   return { editProjectData };
 };
 
-const addParticipant = async ({ email }, user, projectId) => {
+const addParticipant = async ({ emails }, user, projectId) => {
   const isParticipant = await UserRepository.checkUserProjectParticipation([user.id], projectId);
 
   if (!isParticipant) {
     throw new AppError("Project not found or access denied", 403);
   }
-  const participant = await UserRepository.findByEmailArray(email);
+  console.log("Adding participant with emails:", emails, "to project:", projectId);
+  const participant = await UserRepository.findByEmailArray(emails);
 
   if (!participant.users.length) {
     throw new AppError("User(s) with this email not found!", 404);
@@ -334,31 +335,91 @@ const addParticipant = async ({ email }, user, projectId) => {
     throw new AppError("All users with this email are already participants in a project!", 409);
   }
 
-  const redisInvite = crypto.randomUUID();
-  await RedisClient.set(
-    `invite:${redisInvite}`,
-    JSON.stringify({ email, projectId }),
-    { EX: 3600 }
-  );
+  for (const email of emails) {
+    const inviteId = crypto.randomUUID();
 
-  try {
-    await EmailService.sendEmail({
-      to: email,
-      subject: "Project Invitation - TCC Mentor",
-      html: `<p>${user.nome} has invited you to join a project!</p>
-      <p>Click the link below to confirm your email:</p>
-    <p><a href="${baseUrl}/joinProject/${redisInvite}">Accept Invitation</a></p>`
-    }
+    await RedisClient.set(
+      `invite:${inviteId}`,
+      JSON.stringify({ email, projectId }),
+      { EX: 3600 }
     );
 
-  } catch (err) {
-    console.log("Error sending email:", err.message);
-    throw new AppError("Error sending invitation email.", 201);
+    try {
+      await EmailService.sendEmail({
+        to: email,
+        subject: "Project Invitation - TCC Mentor",
+        html: `<p>${user.nome} has invited you to join a project!</p>
+        <p>Click the link below to confirm your email:</p>
+        <p><a href="${baseUrl}/project/${inviteId}/join">Accept Invitation</a></p>`
+      }
+      );
+
+    } catch (err) {
+      console.log("Error sending email:", err.message);
+      throw new AppError("Error sending invitation email.", 201);
+    }
   }
 
   return { message: "Invitation sent successfully.", notFound: participant.notFoundEmails, existingParticipants };
 };
 
+const joinProjectScreen = async (user, inviteId) => {
+  const data = await RedisClient.get(`invite:${inviteId}`);
+  if (!data) {
+    throw new AppError("Invalid or expired invitation link. Please request a new one.", 400);
+  }
+
+  const isParticipant = await UserRepository.checkUserProjectParticipation([user.id], data.projectId);
+
+  if (!isParticipant) {
+    throw new AppError("Project not found or access denied", 403);
+  }
+
+  const participant = await UserRepository.findByIds([user.id]);
+
+  if (!participant) {
+    throw new AppError("User with this email not found!", 404);
+  }
+
+  const projectData = {
+    nomeProjeto: null,
+    descricaoProjeto: null,
+    tipoProjeto: null
+  };
+
+  const project = await UserRepository.findProjectById(data.projectId);
+
+  if (project && project.length > 0) {
+    projectData.nomeProjeto = project[0].nm_projeto;
+    projectData.descricaoProjeto = project[0].dc_projeto;
+    projectData.tipoProjeto = project[0].tp_projeto;
+  }
+
+  return { projectData };
+};
+
+const joinProject = async (user, inviteId) => {
+  const data = await RedisClient.get(`invite:${inviteId}`);
+  if (!data) {
+    throw new AppError("Invalid or expired invitation link. Please request a new one.", 400);
+  }
+
+  const isParticipant = await UserRepository.checkUserProjectParticipation([user.id], data.projectId);
+
+  if (!isParticipant) {
+    throw new AppError("Project not found or access denied", 403);
+  }
+
+  const participant = await UserRepository.findByEmail(data.email);
+
+  if (!participant) {
+    throw new AppError("User with this email not found!", 404);
+  }
+
+  await UserRepository.addParticipantToProject(user.id, data.projectId);
+
+  return { message: "Project joined successfully." };
+};
 
 module.exports = {
   refresh,
@@ -371,5 +432,7 @@ module.exports = {
   home,
   project,
   editProject,
-  addParticipant
+  addParticipant,
+  joinProjectScreen,
+  joinProject
 };
