@@ -24,7 +24,7 @@ const refresh = async (req) => {
   }
 
   const newAccessToken = jwt.sign(
-    { id: user.id_usuario, nome: user.nm_usuario, cargo: user.cargo },
+    { id: user.id_usuario, name: user.nm_usuario, role: user.cargo },
     process.env.JWT_SECRET,
     { expiresIn: '15m' }
   );
@@ -39,17 +39,17 @@ const login = async ({ user, pass }) => {
     throw new AppError("Invalid email or password", 401);
   }
 
-  const senhaValida = await bcrypt.compare(pass, data.senha);
+  const validPassword = await bcrypt.compare(pass, data.senha);
 
-  if (!senhaValida) {
+  if (!validPassword) {
     throw new AppError("Invalid email or password", 401);
   }
 
   const accessToken = jwt.sign(
     {
       id: data.id_usuario,
-      nome: data.nm_usuario,
-      cargo: data.cargo
+      name: data.nm_usuario,
+      role: data.cargo
     },
     process.env.JWT_SECRET,
     { expiresIn: "15m", algorithm: "HS256" }
@@ -80,7 +80,7 @@ const forgetPassword = async ({ email }) => {
   const resetId = crypto.randomUUID();
   await RedisClient.set(
     `reset:${resetId}`,
-    JSON.stringify({ email, token, expiresAt: Date.now() + 3600000 }),
+    JSON.stringify({ email, token }),
     { EX: 3600 }
   );
 
@@ -180,7 +180,6 @@ const confirmEmail = async ({ confirmId }) => {
 
   const parsed = data;
 
-  console.log("Confirming email for:", parsed.email);
   const user = await UserRepository.findByEmail(parsed.email);
 
   if (user.email_verified) {
@@ -204,26 +203,26 @@ const logout = async ({ refreshToken }) => {
 const home = async (user) => {
   const data = {
     id: user.id,
-    nome: user.nome,
-    cargo: user.cargo
+    name: user.nome,
+    role: user.cargo
   };
 
   const homeData = {
-    idProjeto: [],
-    nomeProjetos: [],
-    tipos: [],
-    orientadores: [],
-    alunos: []
+    projectId: [],
+    projectName: [],
+    projectType: [],
+    Advisor: [],
+    Students: []
   };
 
   const projects = data.cargo === 'ALUN' ? await UserRepository.findHomeDataAluno(user.id) : await UserRepository.findHomeDataOrientador(user.id);
 
   projects.forEach(proj => {
-    homeData.idProjeto.push(proj.id_projeto);
-    homeData.nomeProjetos.push(proj.nm_projeto);
-    homeData.tipos.push(proj.tp_projeto);
-    homeData.orientadores.push(proj.orientador);
-    homeData.alunos.push(proj.alunos);
+    homeData.projectId.push(proj.id_projeto);
+    homeData.projectName.push(proj.nm_projeto);
+    homeData.projectType.push(proj.tp_projeto);
+    homeData.Advisor.push(proj.orientador);
+    homeData.Students.push(proj.alunos);
   });
 
   return { user: data, homeData };
@@ -236,33 +235,33 @@ const project = async (user, projectId) => {
     throw new AppError("Project not found or access denied", 403);
   }
 
-  const cargo = user.cargo;
+  const role = user.cargo;
 
   const projectData = {
-    idProjeto: null,
-    nomeProjeto: null,
-    descricaoProjeto: null,
-    tipoProjeto: null,
-    orientador: null,
-    alunos: null
+    projectId: null,
+    projectName: null,
+    projectDescription: null,
+    projectType: null,
+    Advisor: null,
+    Students: null
   };
 
   const messageData = {
-    mensagem: [],
-    remetente: [],
-    dataEnvio: [],
-    cargoRemetente: []
+    message: [],
+    Sender: [],
+    sentAt: [],
+    senderRole: []
   }
 
   const project = await UserRepository.findProjectById(projectId);
 
   if (project && project.length > 0) {
-    projectData.idProjeto = project[0].id_projeto;
-    projectData.nomeProjeto = project[0].nm_projeto;
-    projectData.descricaoProjeto = project[0].dc_projeto;
-    projectData.tipoProjeto = project[0].tp_projeto;
-    projectData.orientador = project[0].orientador;
-    projectData.alunos = project[0].alunos;
+    projectData.projectId = project[0].id_projeto;
+    projectData.projectName = project[0].nm_projeto;
+    projectData.projectDescription = project[0].dc_projeto;
+    projectData.projectType = project[0].tp_projeto;
+    projectData.Advisor = project[0].orientador;
+    projectData.Students = project[0].alunos;
   }
 
   const messages = await UserRepository.findMessagesByProjectId(projectId);
@@ -270,14 +269,14 @@ const project = async (user, projectId) => {
   const messagesData = messages
     .filter(msg => msg.mensagem)
     .map(msg => ({
-      mensagem: msg.mensagem,
-      remetente: msg.nm_remetente,
-      dataEnvio: msg.data_envio,
-      cargoRemetente: msg.cargo_remetente
+      message: msg.mensagem,
+      Sender: msg.nm_remetente,
+      sentAt: msg.data_envio,
+      senderRole: msg.cargo_remetente
     }));
 
 
-  return { cargo, projectData, messagesData };
+  return { role, projectData, messagesData };
 }
 
 const editProject = async (user, projectId) => {
@@ -288,19 +287,19 @@ const editProject = async (user, projectId) => {
   }
 
   const editProjectData = {
-    tp_projeto: null,
-    orientador: null,
-    id_alunos: null,
-    nm_alunos: null
+    projectType: null,
+    advisor: null,
+    studentId: null,
+    studentName: null
   };
 
   const project = await UserRepository.editProject(projectId);
 
   if (project && project.length > 0) {
-    editProjectData.tp_projeto = project[0].tipo;
-    editProjectData.orientador = project[0].orientador;
-    editProjectData.id_alunos = project[0].idalunos || null;
-    editProjectData.nm_alunos = project[0].alunos || null;
+    editProjectData.projectType = project[0].tipo;
+    editProjectData.advisor = project[0].orientador;
+    editProjectData.studentId = project[0].idalunos || null;
+    editProjectData.studentName = project[0].alunos || null;
   }
 
   return { editProjectData };
@@ -382,17 +381,17 @@ const joinProjectScreen = async (user, inviteId) => {
   }
 
   const projectData = {
-    nomeProjeto: null,
-    descricaoProjeto: null,
-    tipoProjeto: null
+    projectName: null,
+    projectDescription: null,
+    projectType: null
   };
 
   const project = await UserRepository.findProjectById(data.projectId);
 
   if (project && project.length > 0) {
-    projectData.nomeProjeto = project[0].nm_projeto;
-    projectData.descricaoProjeto = project[0].dc_projeto;
-    projectData.tipoProjeto = project[0].tp_projeto;
+    projectData.projectName = project[0].nm_projeto;
+    projectData.projectDescription = project[0].dc_projeto;
+    projectData.projectType = project[0].tp_projeto;
   }
 
   return { projectData };
@@ -421,6 +420,185 @@ const joinProject = async (user, inviteId) => {
   return { message: "Project joined successfully." };
 };
 
+const removeParticipant = async ({ id }, user, projectId) => {
+  const isParticipant = await UserRepository.checkUserProjectParticipation([user.id], projectId);
+  if (!isParticipant) {
+    throw new AppError("Project not found or access denied", 403);
+  }
+  const participant = await UserRepository.findByIds([id]);
+
+  if (!participant) {
+    throw new AppError("User not found!", 404);
+  }
+
+  await UserRepository.removeParticipantFromProject(id, projectId);
+
+  return { message: "Participant removed successfully." };
+};
+
+const updateProfileScreen = async (user) => {
+  const userData = {
+    name: user.nome,
+    email: null
+  };
+
+  const email = await UserRepository.findByIds([user.id]);
+
+  if (email && email.length > 0) {
+    userData.email = email[0].email;
+  }
+
+  return { data: userData };
+};
+
+const updateProfile = async ({ name, email }, user) => {
+  const userData = {
+    name: name || null,
+    email: email || null
+  };
+
+  const emailData = await UserRepository.findByIds([user.id]);
+
+  if (emailData && emailData.length > 0) {
+    if (!userData.email && !userData.name) {
+      return { message: "No new data provided, profile remains unchanged." };
+    }
+    if (!userData.email || userData.email === emailData[0].email) {
+      userData.email = emailData[0].email;
+    } else {
+      const existingUser = await UserRepository.findByEmail(userData.email);
+
+      if (existingUser) {
+        throw new AppError("Email already in use", 409);
+      }
+
+      const token = crypto.randomBytes(20).toString('hex');
+      const emailId = crypto.randomUUID();
+      await RedisClient.set(
+        `reset:${emailId}`,
+        JSON.stringify({ email, token }),
+        { EX: 3600 }
+      );
+
+      try {
+        await EmailService.sendEmail({
+          to: email,
+          subject: "Update Email - TCC Mentor",
+          html: `<p>Hi ${user.name},</p>
+    <p>You have requested to update your email. Click the link below to confirm:</p>
+    <p><a href="${baseUrl}/confirmEmail/${emailId}">Confirm Email</a></p>
+    <p>This link will expire in 1 hour.</p>`
+        });
+      } catch (err) {
+        console.log("Error sending email:", err.message);
+        throw new AppError("Error sending update email.", 500);
+      }
+    }
+    userData.name = userData.name || emailData[0].nm_usuario;
+  } else {
+    throw new AppError("User not found!", 404);
+  }
+
+  await UserRepository.updateProfile({ id: user.id, name: userData.name, email: userData.email });
+
+  return { data: userData };
+};
+
+const updatePassword = async ({ currentPassword, newPassword }, user) => {
+  const userData = await UserRepository.findByIds([user.id]);
+  if (!userData || userData.length === 0) {
+    throw new AppError("User not found!", 404);
+  }
+  const validPassword = await bcrypt.compare(currentPassword, userData[0].senha);
+
+  if (!validPassword) {
+    throw new AppError("Current password is incorrect", 401);
+  }
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await UserRepository.updatePassword({ email: userData[0].email, password: hashedPassword });
+
+  return { message: "Password updated successfully." };
+};
+
+const deleteProfileEmail = async (user) => {
+  const userData = await UserRepository.findByIds([user.id]);
+
+  if (!userData || userData.length === 0) {
+    throw new AppError("User not found!", 404);
+  }
+
+  const email = userData[0].email;
+
+  const token = crypto.randomBytes(20).toString('hex');
+  const deleteId = crypto.randomUUID();
+  await RedisClient.set(
+    `reset:${deleteId}`,
+    JSON.stringify({ email, token }),
+    { EX: 3600 }
+  );
+
+  try {
+    await EmailService.sendEmail({
+      to: email,
+      subject: "Delete Profile - TCC Mentor",
+      html: `<p>Hi ${user.name},</p>
+    <p>You have requested to delete your profile. Click the link below to confirm:</p>
+    <p><a href="${baseUrl}/profile/delete/${deleteId}">Confirm Delete</a></p>
+    <p>This link will expire in 1 hour.</p>`
+    });
+  } catch (err) {
+    console.log("Error sending email:", err.message);
+    throw new AppError("Error sending delete email.", 500);
+  }
+
+  return { message: "Delete request sent successfully." };
+};
+
+const deleteProfileScreen = async (user, deleteId) => {
+  const data = await RedisClient.get(`reset:${deleteId}`);
+
+  if (!data) {
+    throw new AppError("Invalid or expired deletion link. Please request a new one.", 400);
+  }
+
+  const { email } = data;
+
+  const userData = await UserRepository.findByEmail(email);
+
+  if (!userData) {
+    throw new AppError("User not found!", 404);
+  }
+
+  return { user: userData };
+};
+
+const deleteProfile = async (user, deleteId, password) => {
+  const data = await RedisClient.get(`reset:${deleteId}`);
+  if (!data) {
+    throw new AppError("Invalid or expired deletion link. Please request a new one.", 400);
+  }
+
+  const { email } = data;
+
+  const userData = await UserRepository.findByEmail(email);
+
+  if (!userData) {
+    throw new AppError("User not found!", 404);
+  }
+
+  const validPassword = await bcrypt.compare(password, userData.senha);
+
+  if (!validPassword) {
+    throw new AppError("Invalid password.", 401);
+  }
+
+  await UserRepository.deleteProfile({ id: userData.id_usuario });
+
+  await RedisClient.del(`reset:${deleteId}`);
+
+  return { message: "Profile deleted successfully." };
+};
+
 module.exports = {
   refresh,
   login,
@@ -434,5 +612,12 @@ module.exports = {
   editProject,
   addParticipant,
   joinProjectScreen,
-  joinProject
+  joinProject,
+  removeParticipant,
+  updateProfileScreen,
+  updateProfile,
+  updatePassword,
+  deleteProfileEmail,
+  deleteProfileScreen,
+  deleteProfile
 };

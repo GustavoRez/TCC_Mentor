@@ -17,4 +17,12 @@ router.get("/editProject/:projectId", auth, AuthController.editProject);
 router.post("/addParticipant/:projectId", auth, AuthController.addParticipant);
 router.get("/project/:inviteId/join", auth, AuthController.joinProjectScreen);
 router.patch("/project/:inviteId/join", auth, AuthController.joinProject);
+router.post("/project/:projectId/removeParticipant", auth, AuthController.removeParticipant);
+router.get("/profile", auth, AuthController.updateProfileScreen);
+router.patch("/profile/update", auth, AuthController.updateProfile);
+router.patch("/profile/updatePassword", auth, AuthController.updatePassword);
+router.post("/profile/delete", auth, AuthController.deleteProfileEmail);
+router.get("/profile/delete/:deleteId", auth, AuthController.deleteProfileScreen);
+router.post("/profile/delete/:deleteId", auth, AuthController.deleteProfile);
+//adicionar projeto
 module.exports = router;

@@ -25,7 +25,7 @@ const auth = async (req, res, next) => {
 
     const user = await UserRepository.findByIds([decoded.id]);
 
-    if (!user) {
+    if (!user.length) {
       return res.status(401).json({
         success: false,
         message: "User not found",

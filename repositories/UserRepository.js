@@ -235,15 +235,67 @@ const editProject = async (projectId) => {
 
 const addParticipantToProject = async (userId, projectId) => {
     const { error } = await supabase
-    .from('projeto_aluno')
-    .insert([{
-        id_aluno: userId,
-        id_projeto: projectId
-    }]);
+        .from('projeto_aluno')
+        .insert([{
+            id_aluno: userId,
+            id_projeto: projectId
+        }]);
 
     if (error) {
         console.log(error);
         throw new Error("Error fetching project data for editing.");
+    }
+
+    return 0;
+};
+
+const removeParticipantFromProject = async (userId, projectId) => {
+    const { error } = await supabase
+        .from('projeto_aluno')
+        .delete()
+        .eq('id_aluno', userId)
+        .eq('id_projeto', projectId);
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error removing participant from project.");
+    }
+
+    return 0;
+};
+
+const updateProfile = async ({ id, name, email }) => {
+    const { error } = await supabase.from("usuario")
+        .update({ nm_usuario: name, email: email })
+        .eq("id_usuario", id);
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error updating profile.");
+    }
+
+    return 0;
+};
+
+const deleteProfile = async ({ id }) => {
+    const { error: errorProj } = await supabase
+        .from("usuario")
+        .delete()
+        .eq("id_usuario", id)
+    
+        const { error: errorMessage } = await supabase
+        .from("usuario")
+        .delete()
+        .eq("id_usuario", id)
+    
+        const { error: errorUser } = await supabase
+        .from("usuario")
+        .delete()
+        .eq("id_usuario", id)
+
+    if (errorProj) {
+        console.log(errorProj);
+        throw new Error("Error deleting profile.");
     }
 
     return 0;
@@ -266,5 +318,8 @@ module.exports = {
     findMessagesByProjectId,
     checkUserProjectParticipation,
     editProject,
-    addParticipantToProject
+    addParticipantToProject,
+    removeParticipantFromProject,
+    updateProfile,
+    deleteProfile
 };
