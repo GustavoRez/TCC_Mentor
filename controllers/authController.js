@@ -218,6 +218,58 @@ const deleteProfile = async (req, res, next) => {
   }
 };
 
+const createProjectScreen = async (req, res, next) => {
+  try {
+    const cargo = req.user.role;
+    return res.json({ success: true, data: cargo });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const createProject = async (req, res, next) => {
+  try {
+    const result = await AuthService.createProject(req.body, req.user);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteProjectEmail = async (req, res, next) => {
+  try {
+    const { projectId } = req.body;
+
+    const result = await AuthService.deleteProjectEmail(req.user, projectId);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteProjectScreen = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+
+    const result = await AuthService.deleteProjectScreen(req.user, projectId);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteProject = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    const { password } = req.body;
+
+    const result = await AuthService.deleteProject(req.user, projectId, password);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   refresh,
   login,
@@ -238,5 +290,10 @@ module.exports = {
   updatePassword,
   deleteProfileEmail,
   deleteProfileScreen,
-  deleteProfile
+  deleteProfile,
+  createProjectScreen,
+  createProject,
+  deleteProjectEmail,
+  deleteProjectScreen,
+  deleteProject
 };

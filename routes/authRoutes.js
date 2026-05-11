@@ -12,17 +12,23 @@ router.post("/register", AuthController.register);
 router.patch("/confirmEmail/:confirmId", AuthController.confirmEmail);
 router.post("/logout", AuthController.logout);
 router.get("/home", auth, AuthController.home);
+router.get("/project/create", auth, AuthController.createProjectScreen);
+router.post("/project/create", auth, AuthController.createProject);
 router.get("/project/:projectId", auth, AuthController.project);
-router.get("/editProject/:projectId", auth, AuthController.editProject);
-router.post("/addParticipant/:projectId", auth, AuthController.addParticipant);
+router.get("/project/update/:projectId", auth, AuthController.editProject); //link foi mudado
+router.post("/project/addParticipant/:projectId", auth, AuthController.addParticipant);
 router.get("/project/:inviteId/join", auth, AuthController.joinProjectScreen);
 router.patch("/project/:inviteId/join", auth, AuthController.joinProject);
 router.post("/project/:projectId/removeParticipant", auth, AuthController.removeParticipant);
+
+router.post("/project/delete", auth, AuthController.deleteProjectEmail);
+router.get("/project/delete/:projectId", auth, AuthController.deleteProjectScreen);
+router.post("/project/delete/:projectId", auth, AuthController.deleteProject);
+
 router.get("/profile", auth, AuthController.updateProfileScreen);
 router.patch("/profile/update", auth, AuthController.updateProfile);
 router.patch("/profile/updatePassword", auth, AuthController.updatePassword);
 router.post("/profile/delete", auth, AuthController.deleteProfileEmail);
 router.get("/profile/delete/:deleteId", auth, AuthController.deleteProfileScreen);
 router.post("/profile/delete/:deleteId", auth, AuthController.deleteProfile);
-//adicionar projeto
 module.exports = router;

@@ -170,6 +170,7 @@ const findHomeDataAluno = async (userId) => {
         console.log(error);
         throw new Error("Error fetching home data for aluno.");
     }
+
     return data;
 };
 
@@ -192,6 +193,21 @@ const findProjectById = async (projectId) => {
         console.log(error);
         throw new Error("Error fetching project data.");
     }
+    return data;
+};
+
+const findProjectByName = async (projectName) => {
+    const { data, error } = await supabase
+        .from("projeto")
+        .select("id_projeto")
+        .eq("nm_projeto", projectName)
+        .maybeSingle();
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error fetching project by name.");
+    }
+
     return data;
 };
 
@@ -282,13 +298,13 @@ const deleteProfile = async ({ id }) => {
         .from("usuario")
         .delete()
         .eq("id_usuario", id)
-    
-        const { error: errorMessage } = await supabase
+
+    const { error: errorMessage } = await supabase
         .from("usuario")
         .delete()
         .eq("id_usuario", id)
-    
-        const { error: errorUser } = await supabase
+
+    const { error: errorUser } = await supabase
         .from("usuario")
         .delete()
         .eq("id_usuario", id)
@@ -299,6 +315,28 @@ const deleteProfile = async ({ id }) => {
     }
 
     return 0;
+};
+
+const createProject = async ({ projectName, projectDescription, projectType, advisorId, url }) => {
+    const { data, error } = await supabase
+        .from("projeto")
+        .insert({
+            nm_projeto: projectName,
+            dc_projeto: projectDescription,
+            tp_projeto: projectType,
+            id_orientador: advisorId,
+            url: url
+        });
+
+    if (error) {
+        console.log(error);
+        if (error.message === 'duplicate key value violates unique constraint "projeto_nm_projeto_key"')
+            throw new Error('Error creating project. Project name already exists!');
+
+        throw new Error("Error creating project.");
+    }
+
+    return data;
 };
 
 module.exports = {
@@ -315,11 +353,13 @@ module.exports = {
     findHomeDataAluno,
     findHomeDataOrientador,
     findProjectById,
+    findProjectByName,
     findMessagesByProjectId,
     checkUserProjectParticipation,
     editProject,
     addParticipantToProject,
     removeParticipantFromProject,
     updateProfile,
-    deleteProfile
+    deleteProfile,
+    createProject
 };

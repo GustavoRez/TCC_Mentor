@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const EmailService = require("./EmailService");
 const RedisClient = require("../config/redisClient");
 const AppError = require('../errors/AppError');
+const { create } = require("domain");
 
 const baseUrl = process.env.BASE_URL;
 
@@ -204,7 +205,7 @@ const home = async (user) => {
   const data = {
     id: user.id,
     name: user.nome,
-    role: user.cargo
+    role: user.role
   };
 
   const homeData = {
@@ -215,7 +216,7 @@ const home = async (user) => {
     Students: []
   };
 
-  const projects = data.cargo === 'ALUN' ? await UserRepository.findHomeDataAluno(user.id) : await UserRepository.findHomeDataOrientador(user.id);
+  const projects = data.role === 'ALUN' ? await UserRepository.findHomeDataAluno(user.id) : await UserRepository.findHomeDataOrientador(user.id);
 
   projects.forEach(proj => {
     homeData.projectId.push(proj.id_projeto);
@@ -599,6 +600,43 @@ const deleteProfile = async (user, deleteId, password) => {
   return { message: "Profile deleted successfully." };
 };
 
+const createProject = async (projectData, user) => {
+  const url = projectData.projectName.toLowerCase().replace(/\s+/g, '-');
+  projectData.url = url;
+
+  if (user.role === 'ALUN') {
+    const isParticipant = await UserRepository.findHomeDataAluno(user.id);
+    if (isParticipant && isParticipant.length > 0) {
+      throw new AppError("You are already a participant in a project!", 409);
+    }
+    const advisor = await UserRepository.findByEmail(projectData.emailAdvisor);
+
+    if (!advisor) {
+      throw new AppError("Advisor with this email not found!", 404);
+    }
+
+    projectData.advisorId = advisor.id_usuario;
+
+  } else {
+    projectData.advisorId = user.id;
+  }
+
+  const resultProject = await UserRepository.createProject(projectData);
+
+  if (user.role === 'ALUN') {
+    const projectId = await UserRepository.findProjectByName(projectData.projectName);
+    if (!projectId) {
+      throw new AppError("Project not found after creation!", 404);
+    }
+
+    await UserRepository.addParticipantToProject(user.id, projectId.id_projeto);
+  }
+
+  return { data: projectData, user: user };
+
+};
+
+
 module.exports = {
   refresh,
   login,
@@ -619,5 +657,6 @@ module.exports = {
   updatePassword,
   deleteProfileEmail,
   deleteProfileScreen,
-  deleteProfile
+  deleteProfile,
+  createProject
 };
