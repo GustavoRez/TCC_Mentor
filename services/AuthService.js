@@ -636,6 +636,95 @@ const createProject = async (projectData, user) => {
 
 };
 
+const deleteProjectEmail = async (user, projectId) => {
+  const project = await UserRepository.findProjectById(projectId);
+
+  if (!project || project.length === 0) {
+    throw new AppError("Project not found!", 404);
+  }
+
+  const participants = await UserRepository.checkProjectPartipants(projectId);
+  const participantIds = participants.map(p => p.id_aluno);
+
+  if (user.role === 'ALUN' && !participantIds.includes(user.id)) {
+    throw new AppError("Project not found or access denied", 403);
+  }
+
+  const participantEmails = await UserRepository.findByIds(participantIds);
+
+  participantEmails.forEach(async (participant) => {
+    try {
+      const token = crypto.randomBytes(20).toString('hex');
+      const deleteId = crypto.randomUUID();
+      await RedisClient.set(
+        `reset:${deleteId}`,
+        JSON.stringify({ email: participant.email, projectId: projectId }),
+        { EX: 3600 }
+      );
+      await EmailService.sendEmail({
+        to: participant.email,
+        subject: "Project Deletion - TCC Mentor",
+        html: `<p>Hi ${participant.nm_usuario},</p>
+        <p>A participant in the project "${project[0].nm_projeto}" has requested deletion.</p>
+        <p>Click the link below to confirm the deletion of the project:</p>
+        <p><a href="${baseUrl}/project/delete/${deleteId}">Confirm Project Deletion</a></p>
+        <p>This link will expire in 1 hour.</p>`
+      });
+    } catch (err) {
+      console.log("Error sending email:", err.message);
+    }
+  });
+
+  return { message: "Project deletion notifications sent successfully." };
+
+};
+
+const deleteProjectScreen = async (user, deleteId) => {
+  const data = await RedisClient.get(`reset:${deleteId}`);
+  if (!data) {
+    throw new AppError("Invalid or expired deletion link. Please request a new one.", 400);
+  }
+
+  const { email, projectId } = data;
+
+  const userData = await UserRepository.findByEmail(email);
+
+  if (!userData) {
+    throw new AppError("User not found!", 404);
+  }
+
+  return { email, projectId };
+};
+
+const deleteProject = async (user, deleteId, password) => {
+  const data = await RedisClient.get(`reset:${deleteId}`);
+  if (!data) {
+    throw new AppError("Invalid or expired deletion link. Please request a new one.", 400);
+  }
+  const { email, projectId } = data;
+
+  const userData = await UserRepository.findByEmail(email);
+
+  if (!userData) {
+    throw new AppError("User not found!", 404);
+  }
+
+  const validPassword = await bcrypt.compare(password, userData.senha);
+  if (!validPassword) {
+    throw new AppError("Invalid password.", 401);
+  }
+
+  const alreadyVoted = await UserRepository.checkVote(userData.id_usuario);
+  if (alreadyVoted[0].voto_delete) {
+    throw new AppError("You have already voted in the project deletion process. Wait for the process to complete.", 403);
+  }
+
+  await UserRepository.voteDelete(projectId, userData.id_usuario);
+
+  //await RedisClient.del(`reset:${deleteId}`);
+
+  return { message: "Project deleted successfully." };
+};
 
 module.exports = {
   refresh,
@@ -658,5 +747,8 @@ module.exports = {
   deleteProfileEmail,
   deleteProfileScreen,
   deleteProfile,
-  createProject
+  createProject,
+  deleteProjectEmail,
+  deleteProjectScreen,
+  deleteProject
 };

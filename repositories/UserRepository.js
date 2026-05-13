@@ -339,6 +339,49 @@ const createProject = async ({ projectName, projectDescription, projectType, adv
     return data;
 };
 
+const checkProjectPartipants = async (projectId) => {
+    const { data, error } = await supabase
+        .from("projeto_aluno")
+        .select("*")
+        .eq("id_projeto", projectId);
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error checking project participants.");
+    }
+
+    return data;
+}
+
+const checkVote = async (userId) => {
+    const { data, error } = await supabase
+        .from("projeto_aluno")
+        .select("voto_delete")
+        .eq("id_aluno", userId);
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error checking user votes.");
+    }
+
+    return data;
+};
+
+const votoDelete = async (projectId, userId) => {
+    const { error } = await supabase
+        .from("projeto_aluno")
+        .update({ voto_delete: true })
+        .eq("id_projeto", projectId)
+        .eq("id_aluno", userId);
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error updating vote status.");
+    }
+
+    return 0;
+};
+
 module.exports = {
     findByEmail,
     findByEmailArray,
@@ -361,5 +404,7 @@ module.exports = {
     removeParticipantFromProject,
     updateProfile,
     deleteProfile,
-    createProject
+    createProject,
+    checkProjectPartipants,
+    checkVote
 };

@@ -249,9 +249,9 @@ const deleteProjectEmail = async (req, res, next) => {
 
 const deleteProjectScreen = async (req, res, next) => {
   try {
-    const { projectId } = req.params;
+    const { deleteId } = req.params;
 
-    const result = await AuthService.deleteProjectScreen(req.user, projectId);
+    const result = await AuthService.deleteProjectScreen(req.user, deleteId);
     return res.json({ success: true, data: result });
   } catch (err) {
     next(err);
@@ -260,10 +260,10 @@ const deleteProjectScreen = async (req, res, next) => {
 
 const deleteProject = async (req, res, next) => {
   try {
-    const { projectId } = req.params;
+    const { deleteId } = req.params;
     const { password } = req.body;
 
-    const result = await AuthService.deleteProject(req.user, projectId, password);
+    const result = await AuthService.deleteProject(req.user, deleteId, password);
     return res.json({ success: true, data: result });
   } catch (err) {
     next(err);
