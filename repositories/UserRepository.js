@@ -382,6 +382,30 @@ const votoDelete = async (projectId, userId) => {
     return 0;
 };
 
+const totalParticipants = async (projectId) => {
+    const { data, error } = await supabase
+        .rpc("contar_alunos_projeto", { id_projeto_param: projectId });
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error counting project participants.");
+    }
+    return data;
+};
+
+const deleteProject = async(projectId) => {
+    const { error } = await supabase
+    .from("projeto")
+    .delete()
+    .eq("id_projeto", projectId)
+
+    if (error) {
+        console.log(error);
+        throw new Error("Error deleting project.");
+    }
+    return 0;
+};
+
 module.exports = {
     findByEmail,
     findByEmailArray,
@@ -406,5 +430,8 @@ module.exports = {
     deleteProfile,
     createProject,
     checkProjectPartipants,
-    checkVote
+    checkVote,
+    votoDelete,
+    totalParticipants,
+    deleteProject
 };

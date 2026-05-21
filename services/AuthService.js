@@ -703,27 +703,59 @@ const deleteProject = async (user, deleteId, password) => {
   }
   const { email, projectId } = data;
 
-  const userData = await UserRepository.findByEmail(email);
+  const userData = await UserRepository.findByIds([user.id]);
 
   if (!userData) {
     throw new AppError("User not found!", 404);
   }
 
-  const validPassword = await bcrypt.compare(password, userData.senha);
+  const validPassword = await bcrypt.compare(password, userData[0].senha);
   if (!validPassword) {
     throw new AppError("Invalid password.", 401);
   }
 
-  const alreadyVoted = await UserRepository.checkVote(userData.id_usuario);
+  const alreadyVoted = await UserRepository.checkVote(userData[0].id_usuario);
   if (alreadyVoted[0].voto_delete) {
     throw new AppError("You have already voted in the project deletion process. Wait for the process to complete.", 403);
   }
 
-  await UserRepository.voteDelete(projectId, userData.id_usuario);
+  await UserRepository.votoDelete(projectId, userData[0].id_usuario);
 
-  //await RedisClient.del(`reset:${deleteId}`);
+  const totalParticipants = await UserRepository.totalParticipants(projectId);
 
-  return { message: "Project deleted successfully." };
+  if (totalParticipants[0].voto_delete > totalParticipants[0].contagem / 2) {
+    await UserRepository.deleteProject(projectId);
+    await RedisClient.del(`reset:${deleteId}`);
+
+    const participants = await UserRepository.checkProjectPartipants(projectId);
+    const participantIds = participants.map(p => p.id_aluno);
+
+    participantEmails.forEach(async (participant) => {
+      try {
+        const token = crypto.randomBytes(20).toString('hex');
+        const deleteId = crypto.randomUUID();
+        await RedisClient.set(
+          `reset:${deleteId}`,
+          JSON.stringify({ email: participant.email, projectId: projectId }),
+          { EX: 3600 }
+        );
+        await EmailService.sendEmail({
+          to: participant.email,
+          subject: "Project Deleted - TCC Mentor",
+          html: `<p>Hi ${participant.nm_usuario},</p>`
+            `<p>The project where you where into was deleted.</p>`
+            `<p>More than the half of the participants voted for it.</p>`
+            `<p>${project[0].nm_projeto} is unreachable!</p>`
+        });
+      } catch (err) {
+        console.log("Error sending email:", err.message);
+      }
+
+      return { message: "Project deleted successfully." };
+    });
+  }
+
+  return { message: "Your vote was successfully registrated. Wait for the other participants." };
 };
 
 module.exports = {

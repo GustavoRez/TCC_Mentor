@@ -20,11 +20,9 @@ router.post("/project/addParticipant/:projectId", auth, AuthController.addPartic
 router.get("/project/:inviteId/join", auth, AuthController.joinProjectScreen);
 router.patch("/project/:inviteId/join", auth, AuthController.joinProject);
 router.post("/project/:projectId/removeParticipant", auth, AuthController.removeParticipant);
-
 router.post("/project/delete", auth, AuthController.deleteProjectEmail);
 router.get("/project/delete/:deleteId", auth, AuthController.deleteProjectScreen);
 router.post("/project/delete/:deleteId", auth, AuthController.deleteProject);
-
 router.get("/profile", auth, AuthController.updateProfileScreen);
 router.patch("/profile/update", auth, AuthController.updateProfile);
 router.patch("/profile/updatePassword", auth, AuthController.updatePassword);
