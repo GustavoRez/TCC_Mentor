@@ -1,4 +1,4 @@
-var express = require("express");
+/*var express = require("express");
 var app = express();
 var connection = require('./database');
 const path = require('path');
@@ -1029,3 +1029,21 @@ if (require.main === module) {
 } else {
     module.exports = app;
 }
+*/
+
+const express = require("express");
+const cookieParser = require("cookie-parser");
+
+const authRoutes = require("./routes/authRoutes");
+const errorMiddleware = require('./middlewares/errorMiddleware');
+
+const app = express();
+
+app.use(express.json());
+app.use(cookieParser());
+
+// rotas
+app.use("/api/v1/auth", authRoutes);
+app.use(errorMiddleware);
+
+module.exports = app;
